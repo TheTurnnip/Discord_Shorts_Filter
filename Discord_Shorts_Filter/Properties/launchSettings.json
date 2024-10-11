@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Discord_Shorts_Filter": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
