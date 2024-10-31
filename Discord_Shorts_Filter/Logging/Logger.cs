@@ -3,7 +3,7 @@
     /// <summary>
     /// Contains static methods to log to the console.
     /// </summary>
-    public sealed class Logger
+    public static class Logger
     {
         private static string GetCurrentDateTime()
         {
