@@ -84,13 +84,13 @@ namespace Discord_Shorts_Filter.AppCommands
             {
                 try
                 {
-                    ulong filterCategory = await CreateFilterCategory(guild, optionsMap[addChannelCategoryName]);
-                    ulong filterChannel = await CreateFilterChannel(guild, optionsMap[addChannelName]);
+                    ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[addChannelCategoryName]);
+                    ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[addChannelName]);
                     if (filterCategory == 0)
                     {
                         Logger.Debug("The category already exists.");
                     }
-                    await AssociateChannel(guild, filterCategory, filterChannel);
+                    await AssociateChannelAsync(guild, filterCategory, filterChannel);
                 }
                 catch (Exception exception)
                 {
@@ -120,10 +120,11 @@ namespace Discord_Shorts_Filter.AppCommands
         /// <param name="guild">The guild to add the category to.</param>
         /// <param name="categoryName">What to name the category.</param>
         /// <returns>
-        /// Returns the id of the category that has been created. If it already exists,
-        /// the existing category id is returned.
+        /// Returns an asynchronous task that represents the creation of a category.
+        /// The result task will return the newly created categories ID, or if a category
+        /// with the same name already exists, it returns the ID of the existing category.
         /// </returns>
-        private async Task<ulong> CreateFilterCategory(SocketGuild guild, string categoryName)
+        private async Task<ulong> CreateFilterCategoryAsync(SocketGuild guild, string categoryName)
         {
             IReadOnlyCollection<SocketCategoryChannel> currentCategories = guild.CategoryChannels;
             foreach (SocketCategoryChannel categoryChannel in currentCategories)
@@ -141,12 +142,17 @@ namespace Discord_Shorts_Filter.AppCommands
         }
 
         /// <summary>
-        /// 
+        /// Creates a new channel for filtering command.
         /// </summary>
-        /// <param name="guild"></param>
-        /// <param name="channelName"></param>
-        /// <returns></returns>
-        private async Task<ulong> CreateFilterChannel(SocketGuild guild, string channelName)
+        /// <param name="guild">The guild to make the channel in.</param>
+        /// <param name="channelName">The name of the channel.</param>
+        /// <returns>
+        /// An asynchronous task that represents the creation of a channel. 
+        /// The task result contains the new channel id.
+        /// If the channel with the same name already exists, then it returns a task with
+        /// the result of 0.
+        /// </returns>
+        private async Task<ulong> CreateFilterChannelAsync(SocketGuild guild, string channelName)
         {
             foreach(SocketGuildChannel guildChannel in guild.Channels)
             {
@@ -162,13 +168,15 @@ namespace Discord_Shorts_Filter.AppCommands
         }
 
         /// <summary>
-        /// 
+        /// Associates a channel to a category.
         /// </summary>
-        /// <param name="guild"></param>
-        /// <param name="category"></param>
-        /// <param name="channel"></param>
-        /// <returns></returns>
-        private async Task AssociateChannel(SocketGuild guild, ulong category, ulong channel)
+        /// <param name="guild">The guild that the channel and category exist in.</param>
+        /// <param name="category">The id of the category to add the channel to.</param>
+        /// <param name="channel">The channel to add to the category.</param>
+        /// <returns>
+        /// An asynchronous task that represents the association of a channel and category.
+        /// </returns>
+        private async Task AssociateChannelAsync(SocketGuild guild, ulong category, ulong channel)
         {
             RestGuild updatedGuild = await client.Rest.GetGuildAsync(guild.Id);
             RestGuildChannel guildChannel = await updatedGuild.GetTextChannelAsync(channel);
