@@ -38,6 +38,7 @@ namespace Discord_Shorts_Filter.AppCommands
             SlashCommandBuilder command = new SlashCommandBuilder();
             
             command.WithName("make_filter_channel");
+            command.WithDefaultMemberPermissions(GuildPermission.Administrator);
             command.WithDescription("Creates a channel that is used to filter out YouTube shorts.");
             command.AddOption(addChannelName, 
                               ApplicationCommandOptionType.String, 
