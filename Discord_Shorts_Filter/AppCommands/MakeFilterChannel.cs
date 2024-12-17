@@ -4,6 +4,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Discord_Shorts_Filter.Logging;
 using Newtonsoft.Json;
+using System.Runtime.InteropServices;
 
 namespace Discord_Shorts_Filter.AppCommands
 {
@@ -82,33 +83,27 @@ namespace Discord_Shorts_Filter.AppCommands
 
             if (optionsMap.ContainsKey(addChannelName) && optionsMap.ContainsKey(addChannelCategoryName))
             {
-                try
-                {
-                    ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[addChannelCategoryName]);
-                    ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[addChannelName]);
-                    if (filterCategory == 0)
-                    {
-                        Logger.Debug("The category already exists.");
-                    }
-                    await AssociateChannelAsync(guild, filterCategory, filterChannel);
-                }
-                catch (Exception exception)
-                {
-                    Logger.Error($"There was an error encountered associating channel to category: {exception}");
-                }
-
+                ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[addChannelCategoryName]);
+                ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[addChannelName]);
+                await AssociateChannelAsync(guild, filterCategory, filterChannel);
             }
             else if (optionsMap.ContainsKey(addChannelName))
             {
-                
+                ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
+                ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[addChannelName]);
+                await AssociateChannelAsync(guild, filterCategory, filterChannel);
             }
             else if (optionsMap.ContainsKey(addChannelCategoryName))
             {
-
+                ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[addChannelCategoryName]);
+                ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
+                await AssociateChannelAsync(guild, filterCategory, filterChannel);
             }
             else
             {
-
+                ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
+                ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
+                await AssociateChannelAsync(guild, filterCategory, filterChannel);
             }
 
             await command.RespondAsync("Created filter channel!", ephemeral: true);
@@ -150,7 +145,7 @@ namespace Discord_Shorts_Filter.AppCommands
         /// An asynchronous task that represents the creation of a channel. 
         /// The task result contains the new channel id.
         /// If the channel with the same name already exists, then it returns a task with
-        /// the result of 0.
+        /// the result of the existing channel ID.
         /// </returns>
         private async Task<ulong> CreateFilterChannelAsync(SocketGuild guild, string channelName)
         {
@@ -158,7 +153,7 @@ namespace Discord_Shorts_Filter.AppCommands
             {
                 if (guildChannel.Name == channelName) 
                 {
-                    return 0;
+                    return guildChannel.Id;
                 }
             }
 
@@ -180,10 +175,17 @@ namespace Discord_Shorts_Filter.AppCommands
         {
             RestGuild updatedGuild = await client.Rest.GetGuildAsync(guild.Id);
             RestGuildChannel guildChannel = await updatedGuild.GetTextChannelAsync(channel);
+            SocketTextChannel socketGuildChannel = (SocketTextChannel)client.GetGuild(guild.Id).GetChannel(channel);
 
+            // Modify the channel to be in the right category.
             await guildChannel.ModifyAsync(prop => prop.CategoryId = category);
 
             Logger.Info($"Added the channel to the category.");
+
+            string message = $"This channel has been set as a YouTube shorts filter. \n" +
+                             $"Your Channel ID is: `{channel}` \n" +
+                             $"Please use when setting up automatic video posting (ie. MEE6).";
+            await socketGuildChannel.SendMessageAsync(message);
         }
     }
 }
