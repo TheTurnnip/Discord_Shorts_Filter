@@ -1,16 +1,34 @@
 using Discord_Shorts_Filter.Logging;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
 
 namespace Discord_Shorts_Filter.Database;
 
+/// <summary>
+/// Represents the database that is used to persist data for the bot.
+/// </summary>
 public class Database
 {
+	/// <summary>
+	/// Gets and Sets the instance of the database class.
+	/// </summary>
 	private static Database? Instance { get; set; } = null;
+	
+	/// <summary>
+	/// Gets and Sets the file path to where the sqlite database file is.
+	/// </summary>
     private string FilePath { get; set; }
+	
+	/// <summary>
+	/// The connection string that is used to connect to the sqlite database.
+	/// </summary>
     private string? ConnectionString { get; set; }
     
+	/// <summary>
+	/// Creates an instance of the Database class using the path
+	/// to the database file.
+	/// </summary>
+	/// <param name="filePath">The path to the sqlite database file.</param>
     private Database(string filePath)
     {
         FilePath = filePath;
@@ -21,30 +39,26 @@ public class Database
         }
     }
 
+	/// <summary>
+	/// Gets the instance of the Database.
+	/// </summary>
+	/// <param name="filePath">
+	/// The path to where the sqlite database file
+	/// is located.
+	/// </param>
+	/// <returns>The instance of the database object.</returns>
     public static Database GetDatabase(string filePath)
     {
 	    return Instance ??= new Database(filePath);
     }
-
+    
+	/// <summary>
+	/// Create the tables that the bot needs in the sqlite database.
+	/// </summary>
+	/// <returns>True if the database was created, false if there was an error.</returns>
     private bool CreateDatabase()
     {
-	    if (!File.Exists(FilePath))
-	    {
-		    try
-		    {
-			    string? path = Path.GetDirectoryName(FilePath);
-			    if (path != null)
-			    {
-				    Directory.CreateDirectory(path);
-			    }
-			    File.Create(FilePath).Close();
-		    }
-	        catch (Exception e)
-	        {
-		        Logger.Error(e.Message);
-		        return false;
-	        }
-	    }
+	    if (!CreateDatabaseFile()) return false;
 
 	    using var connection = new SqliteConnection(ConnectionString);
 	    connection.Open();
@@ -91,6 +105,33 @@ public class Database
 			";
 	    
 	    createDatabaseCommand.ExecuteNonQuery();
+	    return true;
+    }
+
+	/// <summary>
+	/// Creates the path to the sqlite file, and the database
+	/// file if it does not exist.
+	/// </summary>
+	/// <returns>True if the file could be created, false if there was an error.</returns>
+    private bool CreateDatabaseFile()
+    {
+	    if (!File.Exists(FilePath))
+	    {
+		    try
+		    {
+			    string? path = Path.GetDirectoryName(FilePath);
+			    if (path != null)
+			    {
+				    Directory.CreateDirectory(path);
+			    }
+			    File.Create(FilePath).Close();
+		    }
+		    catch (Exception e)
+		    {
+			    Logger.Error(e.Message);
+			    return false;
+		    }
+	    }
 	    return true;
     }
 }
