@@ -13,7 +13,7 @@
     {
         private static DiscordSocketClient? _client;
         private static Database.Database? _database;
-        private static CommandService _commandService = new CommandService();
+        private static readonly CommandService CommandService = new CommandService();
         private static BotConfiguration? _botConfig;
         private static LoggingService? _loggingService;
         private static MakeFilterChannel? _makeFilterChannel;
@@ -23,7 +23,7 @@
             _botConfig = BotConfiguration.GetBotConfiguration();
             _client = new DiscordSocketClient(_botConfig.Config);
             _database = Database.Database.GetDatabase(_botConfig.DatabasePath);
-            _loggingService = new LoggingService(_client, _commandService);
+            _loggingService = new LoggingService(_client, CommandService);
             _makeFilterChannel = new MakeFilterChannel(_client);
 
             _client.Ready += _makeFilterChannel.AddCommandAsync;

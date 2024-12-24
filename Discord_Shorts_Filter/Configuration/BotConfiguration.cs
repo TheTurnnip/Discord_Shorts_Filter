@@ -16,8 +16,8 @@ namespace Discord_Shorts_Filter.Configuration
         {
             // Reads in the token from the .NET User Secrets. Used for building in Visual Studio.
             IConfiguration secretsConfiguration = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
-            string? secretsToken;
-
+            string? secretsToken = null;
+            
             try
             {
                 secretsToken = secretsConfiguration.GetRequiredSection("Discord")["TOKEN"];
@@ -25,7 +25,6 @@ namespace Discord_Shorts_Filter.Configuration
             catch (InvalidOperationException)
             {
                 // Sets the token to null if the .net secrets file can't be read.
-                secretsToken = null;
                 Logger.Debug(".NET Secrets not found. Most users can ignore this message..." +
                              "\n If you are a dev check your config.");
             }

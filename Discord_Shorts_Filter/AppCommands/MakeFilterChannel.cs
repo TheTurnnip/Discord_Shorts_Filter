@@ -14,7 +14,6 @@ namespace Discord_Shorts_Filter.AppCommands
     /// </summary>
     internal class MakeFilterChannel
     {
-
         private DiscordSocketClient client;
         private static readonly string addChannelName = "channel_name";
         private static readonly string defaultChannelName = "filter_channel";
@@ -183,16 +182,34 @@ namespace Discord_Shorts_Filter.AppCommands
             RestGuild updatedGuild = await client.Rest.GetGuildAsync(guild.Id);
             RestGuildChannel guildChannel = await updatedGuild.GetTextChannelAsync(channel);
             RestTextChannel socketGuildChannel = await updatedGuild.GetTextChannelAsync(channel);
+
+            EmbedFieldBuilder channelIdFieldBuilder = new EmbedFieldBuilder();
+            channelIdFieldBuilder.WithName("Channel ID:");
+            channelIdFieldBuilder.WithValue(channel.ToString());
+            channelIdFieldBuilder.WithIsInline(true);
+            
+            EmbedFieldBuilder detailsFieldBuilder = new EmbedFieldBuilder();
+            string detailsMessage = "You can now use it for bots or services that auto post to a channel. " +
+                                    "\n Use the channel ID found above when setting those services." +
+                                    "\n Also please be sure to Assosiate any channel where you want the videos" +
+                                    "poseted to.";
+            detailsFieldBuilder.WithName("How this is used:");
+            detailsFieldBuilder.WithValue(detailsMessage);
+            detailsFieldBuilder.WithIsInline(false);
+            
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.WithTitle("Filter Channel Details");
+            embed.WithDescription("You have made this a channel a filter channel!");
+            embed.WithColor(Color.Green);
+            embed.AddField(channelIdFieldBuilder);
+            embed.AddField(detailsFieldBuilder);
             
             // Modify the channel to be in the right category.
             await guildChannel.ModifyAsync(prop => prop.CategoryId = category);
 
             Logger.Info($"Added the channel to the category.");
-
-            string message = $"This channel has been set as a YouTube shorts filter. \n" +
-                             $"Your Channel ID is: `{channel}` \n" +
-                             $"Please use when setting up automatic video posting (ie. MEE6).";
-            await socketGuildChannel.SendMessageAsync(message);
+            
+            await socketGuildChannel.SendMessageAsync(embed: embed.Build());
         }
     }
 }
