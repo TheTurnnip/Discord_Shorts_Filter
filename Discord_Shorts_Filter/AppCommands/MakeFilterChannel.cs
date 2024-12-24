@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using Discord_Shorts_Filter.Logging;
 using Newtonsoft.Json;
 using System.Runtime.InteropServices;
+using Discord_Shorts_Filter.Tools;
 
 namespace Discord_Shorts_Filter.AppCommands
 {
@@ -87,27 +88,30 @@ namespace Discord_Shorts_Filter.AppCommands
                 ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[addChannelCategoryName]);
                 ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[addChannelName]);
                 await AssociateChannelAsync(guild, filterCategory, filterChannel);
+                await command.RespondAsync("Created filter channel!", ephemeral: true);
             }
             else if (optionsMap.ContainsKey(addChannelName))
             {
                 ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
                 ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[addChannelName]);
                 await AssociateChannelAsync(guild, filterCategory, filterChannel);
+                await command.RespondAsync("Created filter channel!", ephemeral: true);
+
             }
             else if (optionsMap.ContainsKey(addChannelCategoryName))
             {
                 ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[addChannelCategoryName]);
                 ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
                 await AssociateChannelAsync(guild, filterCategory, filterChannel);
+                await command.RespondAsync("Created filter channel!", ephemeral: true);
             }
             else
             {
                 ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
                 ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
                 await AssociateChannelAsync(guild, filterCategory, filterChannel);
+                await command.RespondAsync("Created filter channel!", ephemeral: true);
             }
-
-            await command.RespondAsync("Created filter channel!", ephemeral: true);
         }
 
         /// <summary>
@@ -150,16 +154,18 @@ namespace Discord_Shorts_Filter.AppCommands
         /// </returns>
         private async Task<ulong> CreateFilterChannelAsync(SocketGuild guild, string channelName)
         {
+            ValidatedChannelName validatedChannelName = new ValidatedChannelName(channelName);
+            
             foreach(SocketGuildChannel guildChannel in guild.Channels)
             {
-                if (guildChannel.Name == channelName) 
+                if (guildChannel.Name == validatedChannelName.ValidName) 
                 {
                     return guildChannel.Id;
                 }
             }
 
-            ITextChannel channel = await guild.CreateTextChannelAsync(channelName);
-            Logger.Info($"Created channel: {channelName} In Server: {guild.Name}");
+            ITextChannel channel = await guild.CreateTextChannelAsync(validatedChannelName.ValidName);
+            Logger.Info($"Created channel: {validatedChannelName.ValidName} In Server: {guild.Name}");
             return channel.Id;
         }
 
@@ -176,8 +182,8 @@ namespace Discord_Shorts_Filter.AppCommands
         {
             RestGuild updatedGuild = await client.Rest.GetGuildAsync(guild.Id);
             RestGuildChannel guildChannel = await updatedGuild.GetTextChannelAsync(channel);
-            SocketTextChannel socketGuildChannel = (SocketTextChannel)client.GetGuild(guild.Id).GetChannel(channel);
-
+            RestTextChannel socketGuildChannel = await updatedGuild.GetTextChannelAsync(channel);
+            
             // Modify the channel to be in the right category.
             await guildChannel.ModifyAsync(prop => prop.CategoryId = category);
 

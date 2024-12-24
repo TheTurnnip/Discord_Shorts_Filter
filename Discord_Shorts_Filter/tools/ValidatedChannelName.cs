@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Discord_Shorts_Filter.tools
+﻿
+namespace Discord_Shorts_Filter.Tools
 {
-    internal class ValidatedChannelName
+    public class ValidatedChannelName
     {
-        public string ValidName { get; private set; }
+        public string? ValidName {  get; private set; }
         public string UnValidatedName { get; private set; }
 
         public ValidatedChannelName(string unvalidatedName)
@@ -17,18 +12,14 @@ namespace Discord_Shorts_Filter.tools
             {
                 throw new ArgumentNullException(unvalidatedName, "A null channel name can not be validated!");
             }
-
-            UnValidatedName = unvalidatedName;
-            ValidatedName(unvalidatedName);
-        }
-
-        private void ValidatedName(string originalName)
-        {
-            foreach (char letter in originalName)
+            
+            UnValidatedName = unvalidatedName.Trim();
+            
+            foreach (char letter in UnValidatedName)
             {
                 if (letter == ' ')
                 {
-                    ValidName += "_";
+                    ValidName += "-";
                 }
                 else if (char.IsUpper(letter))
                 {
