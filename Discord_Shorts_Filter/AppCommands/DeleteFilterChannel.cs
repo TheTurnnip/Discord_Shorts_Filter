@@ -9,10 +9,16 @@ namespace Discord_Shorts_Filter.AppCommands;
 public class DeleteFilterChannel : IAppCommand
 {
     private DiscordSocketClient _client;
+    private Logger CommandLogger { get; set; } = Logger.GetLogger("DeleteFilterChannel Logger", LogLevel.Info);
 
     public DeleteFilterChannel(DiscordSocketClient client)
     {
         _client = client;
+    }
+
+    public DeleteFilterChannel(DiscordSocketClient client, Logger commandLogger) : this(client)
+    {
+        CommandLogger = commandLogger;
     }
     
     public async Task AddCommandAsync(ulong guildID)
@@ -33,7 +39,7 @@ public class DeleteFilterChannel : IAppCommand
         catch (HttpException exception) 
         {
             string response = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-            Logger.Error(response);
+            CommandLogger.Error(response);
         }
     }
 
@@ -61,7 +67,7 @@ public class DeleteFilterChannel : IAppCommand
                 ephemeral: true);
         }
         
-        Logger.Debug("Deleted Channel Name: " + channel.Name);
+        CommandLogger.Debug("Deleted Channel Name: " + channel.Name);
         await command.RespondAsync("Removed channel from the filter system. " +
                                    "\nYou can now safely delete it from the server.", 
                                     ephemeral: true);

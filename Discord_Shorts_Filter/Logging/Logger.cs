@@ -5,7 +5,7 @@ public sealed class Logger
     private static Dictionary<string, Logger> Loggers { get; set; }
 
     private string LoggerName { get; set; }
-    private LogLevel LogLevel { get; set; }
+    public LogLevel LogLevel { get; set; }
     
     private Logger(string loggerName, LogLevel logLevel = LogLevel.Info) 
     {

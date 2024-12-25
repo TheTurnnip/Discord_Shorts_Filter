@@ -7,235 +7,241 @@ using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using Discord_Shorts_Filter.Tools;
 
-namespace Discord_Shorts_Filter.AppCommands
+namespace Discord_Shorts_Filter.AppCommands;
+
+/// <summary>
+/// A class that represents the make_filter_channel command, that is used when filtering videos.
+/// </summary>
+internal class MakeFilterChannel : IAppCommand
 {
     /// <summary>
-    /// A class that represents the make_filter_channel command, that is used when filtering videos.
+    /// The client that this command has been added to.
     /// </summary>
-    internal class MakeFilterChannel : IAppCommand
+    private DiscordSocketClient _client;
+        
+    private Logger CommandLogger { get; set; } = Logger.GetLogger("MakeFilterChannel Logger", LogLevel.Info);
+
+    /// <summary>
+    /// Name of the option for adding a filter channel.
+    /// </summary>
+    private static readonly string optionChannelName = "channel_name";
+        
+    /// <summary>
+    /// The default name of the filter channel.
+    /// </summary>
+    private static readonly string defaultChannelName = "filter_channel";
+        
+    /// <summary>
+    /// Name of the option for adding a category for filter channels.
+    /// </summary>
+    private static readonly string optionChannelCategoryName = "category_name";
+
+    /// <summary>
+    /// The default name for the filter channel category.
+    /// </summary>
+    private static readonly string defaultChannelCategoryName = "Filters";
+
+    /// <summary>
+    /// Creates an instance of the MakeFilterChannel class with the client it is part of.
+    /// </summary>
+    /// <param name="client">The client to which the command will be added.</param>
+    public MakeFilterChannel(DiscordSocketClient client)
     {
-        /// <summary>
-        /// The client that this command has been added to.
-        /// </summary>
-        private DiscordSocketClient _client;
+        _client = client;
+    }
 
-        /// <summary>
-        /// Name of the option for adding a filter channel.
-        /// </summary>
-        private static readonly string optionChannelName = "channel_name";
-        
-        /// <summary>
-        /// The default name of the filter channel.
-        /// </summary>
-        private static readonly string defaultChannelName = "filter_channel";
-        
-        /// <summary>
-        /// Name of the option for adding a category for filter channels.
-        /// </summary>
-        private static readonly string optionChannelCategoryName = "category_name";
+    public MakeFilterChannel(DiscordSocketClient client, Logger commandLogger) : this(client)
+    {
+        CommandLogger = commandLogger;
+    }
 
-        /// <summary>
-        /// The default name for the filter channel category.
-        /// </summary>
-        private static readonly string defaultChannelCategoryName = "Filters";
-
-        /// <summary>
-        /// Creates an instance of the MakeFilterChannel class with the client it is part of.
-        /// </summary>
-        /// <param name="client">The client to which the command will be added.</param>
-        internal MakeFilterChannel(DiscordSocketClient client)
+    /// <summary>
+    /// Adds the command to the client.
+    /// </summary>
+    /// <param name="guildID"></param>
+    /// <returns>A task that represents an asynchronous operation.</returns>
+    public async Task AddCommandAsync(ulong guildID)
+    {
+        SlashCommandBuilder commandBuilder = new SlashCommandBuilder();
+            
+        commandBuilder.WithName("make_filter_channel");
+        commandBuilder.WithDefaultMemberPermissions(GuildPermission.Administrator);
+        commandBuilder.WithDescription("Creates a channel that is used to filter out YouTube shorts.");
+        commandBuilder.AddOption(optionChannelName, 
+            ApplicationCommandOptionType.String, 
+            $"Name of the filter channel. Default: {defaultChannelName}", 
+            isRequired: false);
+        commandBuilder.AddOption(optionChannelCategoryName,
+            ApplicationCommandOptionType.String,
+            $"Channel category to add the filter to. Default: {defaultChannelCategoryName}",
+            isRequired: false);
+        try
         {
-            _client = client;
+            await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
+        }
+        catch (HttpException exception) 
+        {
+            string response = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
+            CommandLogger.Error(response);
+        }
+    }
+
+    /// <summary>
+    /// Used to to handle the MakeFilterCommand when the SlashCommandExecuted event takes place.
+    /// </summary>
+    /// <param name="command">The command that has been run.</param>
+    /// <returns>An asynchronous task representing a command that has been run.</returns>
+    public async Task HandleCommandAsync(SocketSlashCommand command)
+    {
+        // Only allow the make_filter_channel command to run.
+        if (command.CommandName != "make_filter_channel")
+        {
+            return;
+        }
+            
+        if (command.GuildId == null)
+        {
+            await command.RespondAsync("This command must be used in a server!");
         }
 
-        /// <summary>
-        /// Adds the command to the client.
-        /// </summary>
-        /// <param name="guildID"></param>
-        /// <returns>A task that represents an asynchronous operation.</returns>
-        public async Task AddCommandAsync(ulong guildID)
+        SocketGuildChannel channel = (SocketGuildChannel)command.Channel;
+        SocketGuild guild = channel.Guild;
+
+        IReadOnlyCollection<SocketSlashCommandDataOption> optionsReadOnly = command.Data.Options;
+        Dictionary<string, string?> optionsMap = new Dictionary<string, string?>();
+
+        foreach (SocketSlashCommandDataOption option in optionsReadOnly)
         {
-            SlashCommandBuilder commandBuilder = new SlashCommandBuilder();
-            
-            commandBuilder.WithName("make_filter_channel");
-            commandBuilder.WithDefaultMemberPermissions(GuildPermission.Administrator);
-            commandBuilder.WithDescription("Creates a channel that is used to filter out YouTube shorts.");
-            commandBuilder.AddOption(optionChannelName, 
-                              ApplicationCommandOptionType.String, 
-                              $"Name of the filter channel. Default: {defaultChannelName}", 
-                              isRequired: false);
-            commandBuilder.AddOption(optionChannelCategoryName,
-                              ApplicationCommandOptionType.String,
-                              $"Channel category to add the filter to. Default: {defaultChannelCategoryName}",
-                              isRequired: false);
-            try
-            {
-                await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
-            }
-            catch (HttpException exception) 
-            {
-                string response = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-                Logger.Error(response);
-            }
+            optionsMap.Add(option.Name, option.Value.ToString());
         }
 
-        /// <summary>
-        /// Used to to handle the MakeFilterCommand when the SlashCommandExecuted event takes place.
-        /// </summary>
-        /// <param name="command">The command that has been run.</param>
-        /// <returns>An asynchronous task representing a command that has been run.</returns>
-        public async Task HandleCommandAsync(SocketSlashCommand command)
+        if (optionsMap.ContainsKey(optionChannelName) && optionsMap.ContainsKey(optionChannelCategoryName))
         {
-            // Only allow the make_filter_channel command to run.
-            if (command.CommandName != "make_filter_channel")
-            {
-                return;
-            }
-            
-            if (command.GuildId == null)
-            {
-                await command.RespondAsync("This command must be used in a server!");
-            }
+            ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[optionChannelCategoryName]);
+            ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[optionChannelName]);
+            await AssociateChannelAsync(guild, filterCategory, filterChannel);
+            await command.RespondAsync("Created filter channel!", ephemeral: true);
+        }
+        else if (optionsMap.ContainsKey(optionChannelName))
+        {
+            ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
+            ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[optionChannelName]);
+            await AssociateChannelAsync(guild, filterCategory, filterChannel);
+            await command.RespondAsync("Created filter channel!", ephemeral: true);
 
-            SocketGuildChannel channel = (SocketGuildChannel)command.Channel;
-            SocketGuild guild = channel.Guild;
+        }
+        else if (optionsMap.ContainsKey(optionChannelCategoryName))
+        {
+            ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[optionChannelCategoryName]);
+            ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
+            await AssociateChannelAsync(guild, filterCategory, filterChannel);
+            await command.RespondAsync("Created filter channel!", ephemeral: true);
+        }
+        else
+        {
+            ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
+            ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
+            await AssociateChannelAsync(guild, filterCategory, filterChannel);
+            await command.RespondAsync("Created filter channel!", ephemeral: true);
+        }
+    }
 
-            IReadOnlyCollection<SocketSlashCommandDataOption> optionsReadOnly = command.Data.Options;
-            Dictionary<string, string?> optionsMap = new Dictionary<string, string?>();
-
-            foreach (SocketSlashCommandDataOption option in optionsReadOnly)
+    /// <summary>
+    /// Creates a new category in the a guild.
+    /// </summary>
+    /// <param name="guild">The guild to add the category to.</param>
+    /// <param name="categoryName">What to name the category.</param>
+    /// <returns>
+    /// Returns an asynchronous task that represents the creation of a category.
+    /// The result task will return the newly created categories ID, or if a category
+    /// with the same name already exists, it returns the ID of the existing category.
+    /// </returns>
+    private async Task<ulong> CreateFilterCategoryAsync(SocketGuild guild, string categoryName)
+    {
+        IReadOnlyCollection<SocketCategoryChannel> currentCategories = guild.CategoryChannels;
+        foreach (SocketCategoryChannel categoryChannel in currentCategories)
+        {
+            if (categoryChannel.Name == categoryName)
             {
-                optionsMap.Add(option.Name, option.Value.ToString());
-            }
-
-            if (optionsMap.ContainsKey(optionChannelName) && optionsMap.ContainsKey(optionChannelCategoryName))
-            {
-                ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[optionChannelCategoryName]);
-                ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[optionChannelName]);
-                await AssociateChannelAsync(guild, filterCategory, filterChannel);
-                await command.RespondAsync("Created filter channel!", ephemeral: true);
-            }
-            else if (optionsMap.ContainsKey(optionChannelName))
-            {
-                ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
-                ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[optionChannelName]);
-                await AssociateChannelAsync(guild, filterCategory, filterChannel);
-                await command.RespondAsync("Created filter channel!", ephemeral: true);
-
-            }
-            else if (optionsMap.ContainsKey(optionChannelCategoryName))
-            {
-                ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[optionChannelCategoryName]);
-                ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
-                await AssociateChannelAsync(guild, filterCategory, filterChannel);
-                await command.RespondAsync("Created filter channel!", ephemeral: true);
-            }
-            else
-            {
-                ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
-                ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
-                await AssociateChannelAsync(guild, filterCategory, filterChannel);
-                await command.RespondAsync("Created filter channel!", ephemeral: true);
+                CommandLogger.Info($"Category {categoryName} already exists, skipping creation...");
+                return categoryChannel.Id;
             }
         }
 
-        /// <summary>
-        /// Creates a new category in the a guild.
-        /// </summary>
-        /// <param name="guild">The guild to add the category to.</param>
-        /// <param name="categoryName">What to name the category.</param>
-        /// <returns>
-        /// Returns an asynchronous task that represents the creation of a category.
-        /// The result task will return the newly created categories ID, or if a category
-        /// with the same name already exists, it returns the ID of the existing category.
-        /// </returns>
-        private async Task<ulong> CreateFilterCategoryAsync(SocketGuild guild, string categoryName)
+        RestCategoryChannel newCategory = await guild.CreateCategoryChannelAsync(categoryName);
+        CommandLogger.Info($"Created category {newCategory.Name} || ID = {newCategory.Id}");
+        return newCategory.Id;
+    }
+
+    /// <summary>
+    /// Creates a new channel for filtering command.
+    /// </summary>
+    /// <param name="guild">The guild to make the channel in.</param>
+    /// <param name="channelName">The name of the channel.</param>
+    /// <returns>
+    /// An asynchronous task that represents the creation of a channel. 
+    /// The task result contains the new channel id.
+    /// If the channel with the same name already exists, then it returns a task with
+    /// the result of the existing channel ID.
+    /// </returns>
+    private async Task<ulong> CreateFilterChannelAsync(SocketGuild guild, string channelName)
+    {
+        ValidatedChannelName validatedChannelName = new ValidatedChannelName(channelName);
+            
+        foreach(SocketGuildChannel guildChannel in guild.Channels)
         {
-            IReadOnlyCollection<SocketCategoryChannel> currentCategories = guild.CategoryChannels;
-            foreach (SocketCategoryChannel categoryChannel in currentCategories)
+            if (guildChannel.Name == validatedChannelName.ValidName) 
             {
-                if (categoryChannel.Name == categoryName)
-                {
-                    Logger.Info($"Category {categoryName} already exists, skipping creation...");
-                    return categoryChannel.Id;
-                }
+                return guildChannel.Id;
             }
-
-            RestCategoryChannel newCategory = await guild.CreateCategoryChannelAsync(categoryName);
-            Logger.Info($"Created category {newCategory.Name} || ID = {newCategory.Id}");
-            return newCategory.Id;
         }
 
-        /// <summary>
-        /// Creates a new channel for filtering command.
-        /// </summary>
-        /// <param name="guild">The guild to make the channel in.</param>
-        /// <param name="channelName">The name of the channel.</param>
-        /// <returns>
-        /// An asynchronous task that represents the creation of a channel. 
-        /// The task result contains the new channel id.
-        /// If the channel with the same name already exists, then it returns a task with
-        /// the result of the existing channel ID.
-        /// </returns>
-        private async Task<ulong> CreateFilterChannelAsync(SocketGuild guild, string channelName)
-        {
-            ValidatedChannelName validatedChannelName = new ValidatedChannelName(channelName);
-            
-            foreach(SocketGuildChannel guildChannel in guild.Channels)
-            {
-                if (guildChannel.Name == validatedChannelName.ValidName) 
-                {
-                    return guildChannel.Id;
-                }
-            }
+        ITextChannel channel = await guild.CreateTextChannelAsync(validatedChannelName.ValidName);
+        CommandLogger.Info($"Created channel: {validatedChannelName.ValidName} In Server: {guild.Name}");
+        return channel.Id;
+    }
 
-            ITextChannel channel = await guild.CreateTextChannelAsync(validatedChannelName.ValidName);
-            Logger.Info($"Created channel: {validatedChannelName.ValidName} In Server: {guild.Name}");
-            return channel.Id;
-        }
+    /// <summary>
+    /// Associates a channel to a category.
+    /// </summary>
+    /// <param name="guild">The guild that the channel and category exist in.</param>
+    /// <param name="category">The id of the category to add the channel to.</param>
+    /// <param name="channel">The channel to add to the category.</param>
+    /// <returns>
+    /// An asynchronous task that represents the association of a channel and category.
+    /// </returns>
+    private async Task AssociateChannelAsync(SocketGuild guild, ulong category, ulong channel)
+    {
+        RestGuild updatedGuild = await _client.Rest.GetGuildAsync(guild.Id);
+        RestGuildChannel guildChannel = await updatedGuild.GetTextChannelAsync(channel);
+        RestTextChannel socketGuildChannel = await updatedGuild.GetTextChannelAsync(channel);
 
-        /// <summary>
-        /// Associates a channel to a category.
-        /// </summary>
-        /// <param name="guild">The guild that the channel and category exist in.</param>
-        /// <param name="category">The id of the category to add the channel to.</param>
-        /// <param name="channel">The channel to add to the category.</param>
-        /// <returns>
-        /// An asynchronous task that represents the association of a channel and category.
-        /// </returns>
-        private async Task AssociateChannelAsync(SocketGuild guild, ulong category, ulong channel)
-        {
-            RestGuild updatedGuild = await _client.Rest.GetGuildAsync(guild.Id);
-            RestGuildChannel guildChannel = await updatedGuild.GetTextChannelAsync(channel);
-            RestTextChannel socketGuildChannel = await updatedGuild.GetTextChannelAsync(channel);
+        EmbedFieldBuilder channelIdFieldBuilder = new EmbedFieldBuilder();
+        channelIdFieldBuilder.WithName("Channel ID:");
+        channelIdFieldBuilder.WithValue(channel.ToString());
+        channelIdFieldBuilder.WithIsInline(true);
+            
+        EmbedFieldBuilder detailsFieldBuilder = new EmbedFieldBuilder();
+        string detailsMessage = "You can now use it for bots or services that auto post to a channel. " +
+                                "\n Use the channel ID found above when setting those services." +
+                                "\n Also please be sure to Assosiate any channel where you want the videos" +
+                                "poseted to.";
+        detailsFieldBuilder.WithName("How this is used:");
+        detailsFieldBuilder.WithValue(detailsMessage);
+        detailsFieldBuilder.WithIsInline(false);
+            
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.WithTitle("Filter Channel Details");
+        embed.WithDescription("You have made this a channel a filter channel!");
+        embed.WithColor(Color.Green);
+        embed.AddField(channelIdFieldBuilder);
+        embed.AddField(detailsFieldBuilder);
+            
+        // Modify the channel to be in the right category.
+        await guildChannel.ModifyAsync(prop => prop.CategoryId = category);
 
-            EmbedFieldBuilder channelIdFieldBuilder = new EmbedFieldBuilder();
-            channelIdFieldBuilder.WithName("Channel ID:");
-            channelIdFieldBuilder.WithValue(channel.ToString());
-            channelIdFieldBuilder.WithIsInline(true);
+        CommandLogger.Info("Added the channel to the category.");
             
-            EmbedFieldBuilder detailsFieldBuilder = new EmbedFieldBuilder();
-            string detailsMessage = "You can now use it for bots or services that auto post to a channel. " +
-                                    "\n Use the channel ID found above when setting those services." +
-                                    "\n Also please be sure to Assosiate any channel where you want the videos" +
-                                    "poseted to.";
-            detailsFieldBuilder.WithName("How this is used:");
-            detailsFieldBuilder.WithValue(detailsMessage);
-            detailsFieldBuilder.WithIsInline(false);
-            
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.WithTitle("Filter Channel Details");
-            embed.WithDescription("You have made this a channel a filter channel!");
-            embed.WithColor(Color.Green);
-            embed.AddField(channelIdFieldBuilder);
-            embed.AddField(detailsFieldBuilder);
-            
-            // Modify the channel to be in the right category.
-            await guildChannel.ModifyAsync(prop => prop.CategoryId = category);
-
-            Logger.Info("Added the channel to the category.");
-            
-            await socketGuildChannel.SendMessageAsync(embed: embed.Build());
-        }
+        await socketGuildChannel.SendMessageAsync(embed: embed.Build());
     }
 }
