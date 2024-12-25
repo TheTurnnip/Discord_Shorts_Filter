@@ -51,25 +51,26 @@ namespace Discord_Shorts_Filter.AppCommands
         /// <summary>
         /// Adds the command to the client.
         /// </summary>
+        /// <param name="guildID"></param>
         /// <returns>A task that represents an asynchronous operation.</returns>
-        public async Task AddCommandAsync()
+        public async Task AddCommandAsync(ulong guildID)
         {
-            SlashCommandBuilder command = new SlashCommandBuilder();
+            SlashCommandBuilder commandBuilder = new SlashCommandBuilder();
             
-            command.WithName("make_filter_channel");
-            command.WithDefaultMemberPermissions(GuildPermission.Administrator);
-            command.WithDescription("Creates a channel that is used to filter out YouTube shorts.");
-            command.AddOption(optionChannelName, 
+            commandBuilder.WithName("make_filter_channel");
+            commandBuilder.WithDefaultMemberPermissions(GuildPermission.Administrator);
+            commandBuilder.WithDescription("Creates a channel that is used to filter out YouTube shorts.");
+            commandBuilder.AddOption(optionChannelName, 
                               ApplicationCommandOptionType.String, 
                               $"Name of the filter channel. Default: {defaultChannelName}", 
                               isRequired: false);
-            command.AddOption(optionChannelCategoryName,
+            commandBuilder.AddOption(optionChannelCategoryName,
                               ApplicationCommandOptionType.String,
                               $"Channel category to add the filter to. Default: {defaultChannelCategoryName}",
                               isRequired: false);
             try
             {
-                await _client.CreateGlobalApplicationCommandAsync(command.Build());
+                await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
             }
             catch (HttpException exception) 
             {

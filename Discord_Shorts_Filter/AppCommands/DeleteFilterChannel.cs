@@ -15,7 +15,7 @@ public class DeleteFilterChannel : IAppCommand
         _client = client;
     }
     
-    public async Task AddCommandAsync()
+    public async Task AddCommandAsync(ulong guildID)
     {
         SlashCommandBuilder commandBuilder = new SlashCommandBuilder();
 
@@ -27,9 +27,8 @@ public class DeleteFilterChannel : IAppCommand
                                 "The channel or category to remove from the system.",
                                 true);
         try
-        {
-            // Make Global command.
-            await _client.CreateGlobalApplicationCommandAsync(commandBuilder.Build());
+        {            
+            await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
         }
         catch (HttpException exception) 
         {
