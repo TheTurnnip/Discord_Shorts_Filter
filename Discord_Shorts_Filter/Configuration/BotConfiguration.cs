@@ -30,6 +30,8 @@ namespace Discord_Shorts_Filter.Configuration
         /// if it does not exist, and stored.
         /// </summary>
         internal string? DatabasePath { private set; get; }
+        
+        private Logger ConfigLogger { get; set; } = Logger.GetLogger("Application Logger");
 
         /// <summary>
         /// Creates an instance of the BotConfiuration class by getting configuration
@@ -48,8 +50,8 @@ namespace Discord_Shorts_Filter.Configuration
             catch (InvalidOperationException)
             {
                 // Sets the token to null if the .net secrets file can't be read.
-                Logger.Debug(".NET Secrets not found. Most users can ignore this message..." +
-                             "\n If you are a dev check your config.");
+                ConfigLogger.Debug(".NET Secrets not found. If you are a dev it is recomended to them " +
+                                   "to avoid pusing tokens to a repo.");
             }
 
             // Gets the token when running in the docker container.
@@ -60,7 +62,7 @@ namespace Discord_Shorts_Filter.Configuration
 
             if (Token == null)
             {
-                Logger.Error("There was an error locating the bot token. Please ensure that it was set.");
+                ConfigLogger.Error("There was an error locating the bot token. Please ensure that it was set.");
             }
 
             /*

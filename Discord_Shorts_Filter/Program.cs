@@ -16,10 +16,12 @@
         private static readonly CommandService CommandService = new CommandService();
         private static BotConfiguration? _botConfig;
         private static LoggingService? _loggingService;
+        private static Logger _applicationLogger;
         private static List<IAppCommand> _appCommands;
 
         public static async Task Main(string[] args)
         {
+            _applicationLogger = Logger.GetLogger("Application Logger", LogLevel.Info);
             _botConfig = BotConfiguration.GetBotConfiguration();
             _client = new DiscordSocketClient(_botConfig.Config);
             _database = Database.Database.GetDatabase(_botConfig.DatabasePath);
