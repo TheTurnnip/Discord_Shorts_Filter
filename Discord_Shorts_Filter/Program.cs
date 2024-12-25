@@ -27,7 +27,7 @@
             _makeFilterChannel = new MakeFilterChannel(_client);
 
             _client.Ready += _makeFilterChannel.AddCommandAsync;
-            _client.SlashCommandExecuted += _makeFilterChannel.CommandHandler;
+            _client.SlashCommandExecuted += _makeFilterChannel.HandleCommandAsync;
 
             await _client.LoginAsync(TokenType.Bot, _botConfig.Token);
             await _client.StartAsync();

@@ -5,13 +5,36 @@ using Microsoft.Extensions.Configuration;
 
 namespace Discord_Shorts_Filter.Configuration
 {
+    /// <summary>
+    /// Represents the discord bots configuration.
+    /// </summary>
     internal sealed class BotConfiguration
     {
+        /// <summary>
+        /// Represents the instance of the BotConfiguration class.
+        /// </summary>
         private static BotConfiguration? Instance { get; set; }
+        
+        /// <summary>
+        /// The DiscordSocketConfig that stores lower level bot configuration.
+        /// </summary>
         internal DiscordSocketConfig? Config { private set; get; }
+        
+        /// <summary>
+        /// The discord token that is used to run the bot.
+        /// </summary>
         internal string? Token { private set; get; }
+
+        /// <summary>
+        /// The path to where the sqlite used by the bot should be created
+        /// if it does not exist, and stored.
+        /// </summary>
         internal string? DatabasePath { private set; get; }
 
+        /// <summary>
+        /// Creates an instance of the BotConfiuration class by getting configuration
+        /// details from evniroment variables or .NET Secrets.
+        /// </summary>
         private BotConfiguration() 
         {
             // Reads in the token from the .NET User Secrets. Used for building in Visual Studio.
@@ -40,6 +63,12 @@ namespace Discord_Shorts_Filter.Configuration
                 Logger.Error("There was an error locating the bot token. Please ensure that it was set.");
             }
 
+            /*
+             * Sets some lower level settings for the discord bot.
+             * GatewayIntents: Limits what can be sent from discord to the bot.
+             * LogGatewayIntentWarnings: If Intent warnings are logged.
+             * UseInteractionSnowflakeDate: If the system time should be used to check dates.
+             */
             Config = new DiscordSocketConfig()
             {
                 GatewayIntents = GatewayIntents.All,
@@ -50,15 +79,17 @@ namespace Discord_Shorts_Filter.Configuration
             // Set path to the sqlite database.
             DatabasePath = Environment.GetEnvironmentVariable("FILTER_DB_PATH") ?? "/shorts_filter_db/filters.db";
         }
-
-        internal static BotConfiguration GetBotConfiguration() 
+        
+        /// <summary>
+        /// Gets the instance of the bot configuration.
+        /// </summary>
+        /// <returns>
+        /// Returns a new instance of the bot config if one does not already exist,
+        /// if one does already exist it returns that.
+        /// </returns>
+        internal static BotConfiguration GetBotConfiguration()
         {
-            if (Instance == null)
-            {
-                Instance = new BotConfiguration();
-            }
-
-            return Instance;
+            return Instance ??= new BotConfiguration();
         }
     }
 }
