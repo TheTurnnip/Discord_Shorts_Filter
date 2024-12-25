@@ -85,6 +85,12 @@ namespace Discord_Shorts_Filter.AppCommands
         /// <returns>An asynchronous task representing a command that has been run.</returns>
         public async Task HandleCommandAsync(SocketSlashCommand command)
         {
+            // Only allow the make_filter_channel command to run.
+            if (command.CommandName != "make_filter_channel")
+            {
+                return;
+            }
+            
             if (command.GuildId == null)
             {
                 await command.RespondAsync("This command must be used in a server!");

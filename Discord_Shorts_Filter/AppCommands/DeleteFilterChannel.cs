@@ -21,13 +21,14 @@ public class DeleteFilterChannel : IAppCommand
 
         commandBuilder.WithName("delete_filter_channel");
         commandBuilder.WithDefaultMemberPermissions(GuildPermission.Administrator);
-        commandBuilder.WithDescription("Delete a channel that is being used to filter out shorts.");
+        commandBuilder.WithDescription("Remove a channel from the filter channels system.");
         commandBuilder.AddOption("filter_channel_id", 
-                                ApplicationCommandOptionType.Integer, 
-                                "Deletes a channel and remvoes it from the filter system.",
+                                ApplicationCommandOptionType.Channel, 
+                                "The channel or category to remove from the system.",
                                 true);
         try
         {
+            // Make Global command.
             await _client.CreateGlobalApplicationCommandAsync(commandBuilder.Build());
         }
         catch (HttpException exception) 
@@ -39,16 +40,31 @@ public class DeleteFilterChannel : IAppCommand
 
     public async Task HandleCommandAsync(SocketSlashCommand command)
     {
+        // Only allow for the delete_filter_channel command to run.
+        if (command.CommandName != "delete_filter_channel")
+        {
+            return;
+        }
+        
         if (command.GuildId == null)
         {
             await command.RespondAsync("This command must be used in a server!");
         }
 
         // Get the channel ID of the channel that needs to be deleted.
-        int deleteChannelId = (int)command.Data.Options.FirstOrDefault(
+        SocketTextChannel? channel = command.Data.Options.First(
             option => option.Name == "filter_channel_id"
-            )!.Value;
+        ).Value as SocketTextChannel;
+
+        if (channel == null)
+        {
+            await command.RespondAsync("There was an error finding the channel in the server.", 
+                ephemeral: true);
+        }
         
-        Logger.Debug(deleteChannelId.ToString());
+        Logger.Debug("Deleted Channel Name: " + channel.Name);
+        await command.RespondAsync("Removed channel from the filter system. " +
+                                   "\nYou can now safely delete it from the server.", 
+                                    ephemeral: true);
     }
 }
