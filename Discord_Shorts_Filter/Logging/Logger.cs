@@ -1,64 +1,83 @@
-﻿namespace Discord_Shorts_Filter.Logging
+﻿namespace Discord_Shorts_Filter.Logging;
+
+public sealed class Logger
 {
-    /// <summary>
-    /// Contains static methods to log to the console.
-    /// </summary>
-    public static class Logger
+    private static Dictionary<string, Logger> Loggers { get; set; }
+
+    private string LoggerName { get; set; }
+    private LogLevel LogLevel { get; set; }
+    
+    private Logger(string loggerName, LogLevel logLevel = LogLevel.Info) 
     {
-        /// <summary>
-        /// Gets the datetime when the method is called.
-        /// </summary>
-        /// <returns>The current datetime.</returns>
-        private static string GetCurrentDateTime()
+        LoggerName = loggerName;
+        LogLevel = logLevel;
+    }
+
+    public static Logger GetLogger(string loggerName)
+    {
+        if (!Loggers.ContainsKey(loggerName))
         {
-            return DateTime.Now.ToLocalTime().ToString("dd-MM-yyyy HH:mm:ss");
+            Loggers.Add(loggerName, new Logger(loggerName));
         }
+        return Loggers[loggerName];
+    }
 
-        /// <summary>
-        /// Logs a message with the Citical level
-        /// </summary>
-        /// <param name="message">The log message.</param>
-        public static void Critical(string message)
+    public static Logger GetLogger(string loggerName, LogLevel logLevel)
+    {
+        if (!Loggers.ContainsKey(loggerName))
         {
-            Console.WriteLine($"CRITICAL || {GetCurrentDateTime()} || Message: {message}");
+            Loggers.Add(loggerName, new Logger(loggerName, logLevel));
         }
+        return Loggers[loggerName];
+    }
 
-        /// <summary>
-        /// Logs a message with the Error level.
-        /// </summary>
-        /// <param name="message">The log message.</param>
-        public static void Error(string message)
+    public void Debug(string message)
+    {
+        if (LogLevel <= LogLevel.Debug)
         {
-            Console.WriteLine($"ERROR || {GetCurrentDateTime()} || Message: {message}");
+            string formattedMessage = $"DEBUG || {LoggerName} || {GetDateTime()}: {message}";
+            Console.WriteLine(formattedMessage);
         }
+    }
 
-        /// <summary>
-        /// Logs a message with the Info level.
-        /// </summary>
-        /// <param name="message">The log message.</param>
-        public static void Info(string message)
+    public void Info(string message)
+    {
+        if (LogLevel <= LogLevel.Info)
         {
-            Console.WriteLine($"INFO || {GetCurrentDateTime()} || Message: {message}");
-
+            string formattedMessage = $"INFO || {LoggerName} || {GetDateTime()}: {message}";
+            Console.WriteLine(formattedMessage);
         }
+    }
 
-        /// <summary>
-        /// Logs a message with the Warn level.
-        /// </summary>
-        /// <param name="message">The message to log.</param>
-        public static void Warn(string message)
+    public void Warn(string message)
+    {
+        if (LogLevel <= LogLevel.Warning)
         {
-            Console.WriteLine($"WARN || {GetCurrentDateTime()} || Message: {message}");
+            string formattedMessage = $"WARNING || {LoggerName} || {GetDateTime()}: {message}";
+            Console.WriteLine(formattedMessage);
         }
+    }
 
-        /// <summary>
-        /// Logs a message with the Debug level.
-        /// </summary>
-        /// <param name="message">The message to log.</param>
-        public static void Debug(string message) 
+    public void Error(string message)
+    {
+        if (LogLevel <= LogLevel.Error)
         {
-            Console.WriteLine($"DEBUG || {GetCurrentDateTime()} || Message: {message}");
+            string formattedMessage = $"ERROR || {LoggerName} || {GetDateTime()}: {message}";
+            Console.WriteLine(formattedMessage);
         }
+    }
 
+    public void Critical(string message)
+    {
+        if (LogLevel <= LogLevel.Critical)
+        {
+            string formattedMessage = $"CRITICAL || {LoggerName} || {GetDateTime()}: {message}";
+            Console.WriteLine(formattedMessage);
+        }
+    }
+
+    private string GetDateTime()
+    {
+        return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
     }
 }

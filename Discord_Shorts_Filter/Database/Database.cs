@@ -23,6 +23,11 @@ public class Database
 	/// The connection string that is used to connect to the sqlite database.
 	/// </summary>
     private string? ConnectionString { get; set; }
+	
+	/// <summary>
+	/// The Logger that is to be used for the Database class.
+	/// </summary>
+	private Logger DatabaseLogger { get; set; } = Logger.GetLogger("Database Logger", LogLevel.Info);
     
 	/// <summary>
 	/// Creates an instance of the Database class using the path
@@ -33,11 +38,17 @@ public class Database
     {
         FilePath = filePath;
         ConnectionString = $"Data Source={filePath};";
+        
         if (!CreateDatabase())
         {
-	        Logger.Error("There was an error creating the database!");
+	        DatabaseLogger.Error("There was an error creating the database!");
         }
     }
+
+	private Database(string filename, Logger databaseLogger) : this(filename) 
+	{
+		DatabaseLogger = databaseLogger;
+	}
 
 	/// <summary>
 	/// Gets the instance of the Database.
@@ -51,6 +62,11 @@ public class Database
     {
 	    return Instance ??= new Database(filePath);
     }
+
+	public static Database GetDatabase(string filePath, Logger databaseLogger)
+	{
+		return Instance ??= new Database(filePath, databaseLogger);
+	}
     
 	/// <summary>
 	/// Create the tables that the bot needs in the sqlite database.
@@ -58,7 +74,12 @@ public class Database
 	/// <returns>True if the database was created, false if there was an error.</returns>
     private bool CreateDatabase()
     {
-	    if (!CreateDatabaseFile()) return false;
+	    if (!CreateDatabaseFile())
+	    {
+		    DatabaseLogger.Error("Unable to create the database tables due to error" +
+		                         "when creating the sqlite database file.");
+		    return false;
+	    }
 
 	    using var connection = new SqliteConnection(ConnectionString);
 	    connection.Open();
@@ -103,9 +124,18 @@ public class Database
 					FOREIGN KEY (filter_channel_id) REFERENCES DiscordFilterChannels (id) ON DELETE SET NULL 
 				);
 			";
-	    
-	    createDatabaseCommand.ExecuteNonQuery();
-	    return true;
+
+	    try
+	    {
+		    createDatabaseCommand.ExecuteNonQuery();
+		    return true;
+	    }
+	    catch (Exception e)
+	    {
+		    DatabaseLogger.Critical("An Error was encoutnered when trying to " +
+		                            "create the database tables. The program will now exit...");
+		    throw new IOException("There was an error comunicating with the database!");
+	    }
     }
 
 	/// <summary>
@@ -117,6 +147,7 @@ public class Database
     {
 	    if (!File.Exists(FilePath))
 	    {
+		    DatabaseLogger.Info("Creating the database file...");
 		    try
 		    {
 			    string? path = Path.GetDirectoryName(FilePath);
@@ -128,10 +159,13 @@ public class Database
 		    }
 		    catch (Exception e)
 		    {
-			    Logger.Error(e.Message);
+			    DatabaseLogger.Error("There was an error making the database file.");
+			    DatabaseLogger.Critical(e.Message);
 			    return false;
 		    }
 	    }
+	    
+	    DatabaseLogger.Info("The database file has been created.");
 	    return true;
     }
 }
