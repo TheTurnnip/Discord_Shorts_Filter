@@ -2,7 +2,7 @@
 
 public sealed class Logger
 {
-    private static Dictionary<string, Logger> Loggers { get; set; }
+    private static Dictionary<string, Logger> Loggers { get; set; } = new();
 
     private string LoggerName { get; set; }
     public LogLevel LogLevel { get; set; }
