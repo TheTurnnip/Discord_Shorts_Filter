@@ -11,16 +11,24 @@ namespace Discord_Shorts_Filter.AppCommands;
 public class MakePostChannel : IAppCommand
 {
     private DiscordSocketClient _client;
+    private Logger CommandLogger { get; set; } = Logger.GetLogger("MakePostChannel Logger", LogLevel.Info);
 
     public MakePostChannel(DiscordSocketClient client)
     {
         _client = client;
     }
-    
+
+    public MakePostChannel(DiscordSocketClient client, Logger commandLogger) : this(client)
+    {
+        CommandLogger = commandLogger;
+    }
+
+    public string CommandName { get; } = "make_post_channel";
+
     public async Task AddCommandAsync(ulong guildID)
     {
         SlashCommandBuilder commandBuilder = new SlashCommandBuilder();
-        commandBuilder.WithName("make_post_channel");
+        commandBuilder.WithName(CommandName);
         commandBuilder.WithDefaultMemberPermissions(GuildPermission.Administrator);
         commandBuilder.WithDescription("Makes a new post channel, or " +
                                        "makes an existing channel a post channel.");
@@ -36,12 +44,17 @@ public class MakePostChannel : IAppCommand
         catch (HttpException exception) 
         {
             string response = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-            Logger.Error(response);
+            CommandLogger.Error(response);
         }
     }
 
     public async Task HandleCommandAsync(SocketSlashCommand command)
     {
+        if (command.CommandName != CommandName)
+        {
+            return;
+        }
+        
         // Get the name of the channel that should be made a post channel.
         string? postChannelName = command.Data.Options.FirstOrDefault(
             option => option.Name == "channel_name"
@@ -52,14 +65,16 @@ public class MakePostChannel : IAppCommand
 
         if (commandGuild == null)
         {
-            await command.RespondAsync("This command must be run in a server!");
+            await command.RespondAsync("This command must be run in a server!", 
+                                        ephemeral: true);
         }
         
         ulong postChannelId = await CreateFilterChannelAsync(commandGuild, postChannelName);
         
-        Logger.Debug("Post Channel ID:" + postChannelId.ToString());
+        CommandLogger.Debug("Post Channel ID:" + postChannelId.ToString());
         
-        await command.RespondAsync($"Channel {postChannelName} has been made a post channel.");
+        await command.RespondAsync($"Channel {postChannelName} has been made a post channel.", 
+                                    ephemeral: true);
     }
 
     private async Task<ulong> CreateFilterChannelAsync(SocketGuild guild, string channelName)

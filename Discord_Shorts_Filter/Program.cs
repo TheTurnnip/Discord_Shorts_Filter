@@ -1,63 +1,73 @@
-﻿namespace Discord_Shorts_Filter
+﻿using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
+using Discord_Shorts_Filter.Logging;
+using Discord_Shorts_Filter.Configuration;
+using Discord_Shorts_Filter.AppCommands;
+using Discord_Shorts_Filter.Tools;
+using Discord_Shorts_Filter.Database;
+
+namespace Discord_Shorts_Filter;
+
+internal class Program
 {
-    using Discord;
-    using Discord.Commands;
-    using Discord.WebSocket;
-    using Discord_Shorts_Filter.Logging;
-    using Discord_Shorts_Filter.Configuration;
-    using Discord_Shorts_Filter.AppCommands;
-    using Discord_Shorts_Filter.Tools;
-    using Discord_Shorts_Filter.Database;
+    private static DiscordSocketClient? _client;
+    private static Database.Database? _database;
+    private static readonly CommandService CommandService = new CommandService();
+    private static BotConfiguration? _botConfig;
+    private static LoggingService? _loggingService;
+    private static Logger _applicationLogger;
+    private static List<IAppCommand> _appCommands;
 
-    internal class Program
+    public static async Task Main(string[] args)
     {
-        private static DiscordSocketClient? _client;
-        private static Database.Database? _database;
-        private static readonly CommandService CommandService = new CommandService();
-        private static BotConfiguration? _botConfig;
-        private static LoggingService? _loggingService;
-        private static Logger _applicationLogger;
-        private static List<IAppCommand> _appCommands;
+        _applicationLogger = Logger.GetLogger("Application Logger", LogLevel.Info);
+        _botConfig = BotConfiguration.GetBotConfiguration();
+        _client = new DiscordSocketClient(_botConfig.Config);
+        _database = Database.Database.GetDatabase(_botConfig.DatabasePath);
+        _loggingService = new LoggingService(_client, CommandService, _applicationLogger);
 
-        public static async Task Main(string[] args)
+        _appCommands = new List<IAppCommand>()
         {
-            _applicationLogger = Logger.GetLogger("Application Logger", LogLevel.Info);
-            _botConfig = BotConfiguration.GetBotConfiguration();
-            _client = new DiscordSocketClient(_botConfig.Config);
-            _database = Database.Database.GetDatabase(_botConfig.DatabasePath);
-            _loggingService = new LoggingService(_client, CommandService);
+            new MakeFilterChannel(_client, _applicationLogger),
+            new MakePostChannel(_client, _applicationLogger),
+            new RemoveFilterChannel(_client, _applicationLogger),
+            new RemovePostChannel(_client, _applicationLogger),
+        };
 
-            _appCommands = new List<IAppCommand>()
-            {
-                new MakeFilterChannel(_client),
-                new MakePostChannel(_client),
-                new DeleteFilterChannel(_client)
-            };
+        _client.Ready += ClientOnReady;
 
-            _client.Ready += ClientOnReady;
+        _applicationLogger.Info("Logging into Discord...");
+        await _client.LoginAsync(TokenType.Bot, _botConfig.Token);
+        _applicationLogger.Info("Logged into Discord!");
+        _applicationLogger.Info("Starting the bot...");
+        await _client.StartAsync();
+        _applicationLogger.Info("The bot has been started!");
             
-            await _client.LoginAsync(TokenType.Bot, _botConfig.Token);
-            await _client.StartAsync();
-            
-            await Task.Delay(-1);
-        }
+        await Task.Delay(-1);
+    }
 
-        private static async Task ClientOnReady()
+    private static async Task ClientOnReady()
+    {
+        _applicationLogger.Info("The bot is ready!");
+
+        // Register each command with all the guilds the bot is in.
+        foreach (SocketGuild guild in _client.Guilds)
         {
-            // Register each command with all the guilds the bot is in.
-            foreach (SocketGuild guild in _client.Guilds)
-            {
-                foreach (IAppCommand appCommand in _appCommands)
-                {
-                    appCommand.AddCommandAsync(guild.Id);
-                }
-            }
-
-            // Subscribe the client to each command handler.
+            _applicationLogger.Info($"Staring to register commands for Guild: {guild.Name}");
             foreach (IAppCommand appCommand in _appCommands)
             {
-                _client.SlashCommandExecuted += appCommand.HandleCommandAsync;
+                await appCommand.AddCommandAsync(guild.Id);
+                _applicationLogger.Info($"Registerd {appCommand.GetType()} with {guild.Name}...");
             }
+        }
+            
+        // Subscribe the client to each command handler.
+        foreach (IAppCommand appCommand in _appCommands)
+        {
+            _applicationLogger.Info($"Setting up handler for command {appCommand}...");
+            _client.SlashCommandExecuted += appCommand.HandleCommandAsync;
+            _applicationLogger.Info($"{appCommand.GetType()} has been setup!");
         }
     }
 }

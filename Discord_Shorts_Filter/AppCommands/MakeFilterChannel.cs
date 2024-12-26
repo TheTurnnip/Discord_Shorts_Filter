@@ -55,6 +55,8 @@ internal class MakeFilterChannel : IAppCommand
         CommandLogger = commandLogger;
     }
 
+    public string CommandName { get; } = "make_filter_channel";
+
     /// <summary>
     /// Adds the command to the client.
     /// </summary>
@@ -64,7 +66,7 @@ internal class MakeFilterChannel : IAppCommand
     {
         SlashCommandBuilder commandBuilder = new SlashCommandBuilder();
             
-        commandBuilder.WithName("make_filter_channel");
+        commandBuilder.WithName(CommandName);
         commandBuilder.WithDefaultMemberPermissions(GuildPermission.Administrator);
         commandBuilder.WithDescription("Creates a channel that is used to filter out YouTube shorts.");
         commandBuilder.AddOption(optionChannelName, 
@@ -94,7 +96,7 @@ internal class MakeFilterChannel : IAppCommand
     public async Task HandleCommandAsync(SocketSlashCommand command)
     {
         // Only allow the make_filter_channel command to run.
-        if (command.CommandName != "make_filter_channel")
+        if (command.CommandName != CommandName)
         {
             return;
         }

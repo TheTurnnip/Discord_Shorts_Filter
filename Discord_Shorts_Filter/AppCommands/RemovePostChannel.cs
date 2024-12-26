@@ -1,37 +1,41 @@
 using Discord_Shorts_Filter.Logging;
 using Discord;
+using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 
 namespace Discord_Shorts_Filter.AppCommands;
 
-public class DeleteFilterChannel : IAppCommand
+public class RemovePostChannel : IAppCommand
 {
     private DiscordSocketClient _client;
-    private Logger CommandLogger { get; set; } = Logger.GetLogger("DeleteFilterChannel Logger", LogLevel.Info);
+    
+    private Logger CommandLogger { get; set; } = Logger.GetLogger("RemovePostChannel Logger", LogLevel.Info);
 
-    public DeleteFilterChannel(DiscordSocketClient client)
+    public RemovePostChannel(DiscordSocketClient client)
     {
         _client = client;
     }
 
-    public DeleteFilterChannel(DiscordSocketClient client, Logger commandLogger) : this(client)
+    public RemovePostChannel(DiscordSocketClient client, Logger logger) : this(client)
     {
-        CommandLogger = commandLogger;
+        CommandLogger = logger;
     }
-    
+
+    public string CommandName { get; } = "remove_post_channel";
+
     public async Task AddCommandAsync(ulong guildID)
     {
         SlashCommandBuilder commandBuilder = new SlashCommandBuilder();
-
-        commandBuilder.WithName("delete_filter_channel");
+        commandBuilder.WithName(CommandName);
         commandBuilder.WithDefaultMemberPermissions(GuildPermission.Administrator);
-        commandBuilder.WithDescription("Remove a channel from the filter channels system.");
-        commandBuilder.AddOption("filter_channel_id", 
-                                ApplicationCommandOptionType.Channel, 
-                                "The channel or category to remove from the system.",
-                                true);
+        commandBuilder.WithDescription("Removes a channel from the post system.");
+        commandBuilder.AddOption("post_channel_name",
+                                 ApplicationCommandOptionType.String,
+                                 "The channel to remove from the post system.",
+                                 true);
+        
         try
         {            
             await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
@@ -45,18 +49,16 @@ public class DeleteFilterChannel : IAppCommand
 
     public async Task HandleCommandAsync(SocketSlashCommand command)
     {
-        // Only allow for the delete_filter_channel command to run.
-        if (command.CommandName != "delete_filter_channel")
+        if (command.CommandName != CommandName)
         {
             return;
         }
-        
+
         if (command.GuildId == null)
         {
-            await command.RespondAsync("This command must be used in a server!");
+            await command.RespondAsync("This command must be used in a server!", ephemeral: true);
         }
-
-        // Get the channel ID of the channel that needs to be deleted.
+        
         SocketTextChannel? channel = command.Data.Options.First(
             option => option.Name == "filter_channel_id"
         ).Value as SocketTextChannel;
@@ -67,9 +69,8 @@ public class DeleteFilterChannel : IAppCommand
                 ephemeral: true);
         }
         
-        CommandLogger.Debug("Deleted Channel Name: " + channel.Name);
-        await command.RespondAsync("Removed channel from the filter system. " +
+        await command.RespondAsync("Removed channel from the post system. " +
                                    "\nYou can now safely delete it from the server.", 
-                                    ephemeral: true);
+            ephemeral: true);
     }
 }

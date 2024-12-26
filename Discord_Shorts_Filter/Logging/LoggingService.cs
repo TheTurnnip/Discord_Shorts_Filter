@@ -2,53 +2,75 @@
 using Discord.Commands;
 using Discord.WebSocket;
 
-namespace Discord_Shorts_Filter.Logging
+namespace Discord_Shorts_Filter.Logging;
+
+/// <summary>
+/// Represents the logging service that handles log events from the bot.
+/// </summary>
+public class LoggingService
 {
+
+    private Logger LoggingServiceLogger { get; set; }
+        
     /// <summary>
-    /// Represents the logging service that handles log events from the bot.
+    /// Creates an instance of the Logging Service and subscribes
+    /// a client and command service to LogAsync method.
     /// </summary>
-    public class LoggingService
+    /// <param name="client">
+    /// The bot client that the LoggingService will handle events for.
+    /// </param>
+    /// <param name="command">
+    /// The CommandService that the LoggingService will handle events for.
+    /// </param>
+    public LoggingService(DiscordSocketClient client, CommandService command, Logger logger)
     {
+        LoggingServiceLogger = logger;
+        client.Log += LogAsync;
+        command.Log += LogAsync;
+    }
 
-        /// <summary>
-        /// The current date-time.
-        /// </summary>
-        private readonly string _currentDateTime = DateTime.Now.ToLocalTime().ToString("dd-MM-yyyy HH:mm:ss");
-
-        /// <summary>
-        /// Creates an instance of the Logging Service and subscribes
-        /// a client and command service to LogAsync method.
-        /// </summary>
-        /// <param name="client">
-        /// The bot client that the LoggingService will handle events for.
-        /// </param>
-        /// <param name="command">
-        /// The CommandService that the LoggingService will handle events for.
-        /// </param>
-        public LoggingService(DiscordSocketClient client, CommandService command)
+    /// <summary>
+    /// Handles Log event from the DiscordSocketClient or CommandService class.
+    /// </summary>
+    /// <param name="message">The message that has been sent by an event.</param>
+    /// <returns>A task representing the compeltion of hadling logging a message.</returns>
+    private Task LogAsync(LogMessage message)
+    {
+        if (message.Exception is CommandException commandException)
         {
-            client.Log += LogAsync;
-            command.Log += LogAsync;
+            string commandLogMessage = $"Command: {commandException.Command.Name} Message: {message.Message}";
+            LogMessage(message.Severity, commandLogMessage);
+        }
+        else
+        {
+            LogMessage(message.Severity, message.Message);
         }
 
-        /// <summary>
-        /// Handles Log event from the DiscordSocketClient or CommandService class.
-        /// </summary>
-        /// <param name="message">The message that has been sent by an event.</param>
-        /// <returns>A task representing the compeltion of hadling logging a message.</returns>
-        private Task LogAsync(LogMessage message)
-        {
-            if (message.Exception is CommandException commandException)
-            {
-                Console.WriteLine($"{message.Severity} || {_currentDateTime} || Command: " +
-                    $"{commandException.Command.Aliases.First()} || Message: {message}");
-            }
-            else
-            {
-                Console.WriteLine($"{message.Severity} || {_currentDateTime} || Message: {message}");
-            }
+        return Task.CompletedTask;
+    }
 
-            return Task.CompletedTask;
+    private void LogMessage(LogSeverity logSeverity, string message)
+    {
+        switch (logSeverity)
+        {
+            case LogSeverity.Critical:
+                LoggingServiceLogger.Critical(message);
+                break;
+            case LogSeverity.Error: 
+                LoggingServiceLogger.Error(message);
+                break;
+            case LogSeverity.Warning:
+                LoggingServiceLogger.Warn(message);
+                break;
+            case LogSeverity.Info:
+                LoggingServiceLogger.Info(message);
+                break;
+            case LogSeverity.Verbose:
+                LoggingServiceLogger.Verbose(message);
+                break;
+            case LogSeverity.Debug:
+                LoggingServiceLogger.Debug(message);
+                break;
         }
     }
 }

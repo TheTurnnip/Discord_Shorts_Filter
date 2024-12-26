@@ -156,6 +156,7 @@ public class Database
 				    Directory.CreateDirectory(path);
 			    }
 			    File.Create(FilePath).Close();
+			    DatabaseLogger.Info("The database file has been created.");
 		    }
 		    catch (Exception e)
 		    {
@@ -164,8 +165,10 @@ public class Database
 			    return false;
 		    }
 	    }
-	    
-	    DatabaseLogger.Info("The database file has been created.");
+	    else
+	    {
+		    DatabaseLogger.Info("The database file already exists, skipping creation...");
+	    }
 	    return true;
     }
 }

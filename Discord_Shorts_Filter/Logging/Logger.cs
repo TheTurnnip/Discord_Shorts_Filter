@@ -40,6 +40,15 @@ public sealed class Logger
         }
     }
 
+    public void Verbose(string message)
+    {
+        if (LogLevel <= LogLevel.Verbose)
+        {
+            string formattedMessage = $"VERBOSE INFO || {LoggerName} || {GetDateTime()}: {message}";
+            Console.WriteLine(formattedMessage);
+        }
+    }
+    
     public void Info(string message)
     {
         if (LogLevel <= LogLevel.Info)
