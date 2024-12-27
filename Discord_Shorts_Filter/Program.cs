@@ -6,6 +6,7 @@ using Discord_Shorts_Filter.Configuration;
 using Discord_Shorts_Filter.AppCommands;
 using Discord_Shorts_Filter.Tools;
 using Discord_Shorts_Filter.Database;
+using Discord_Shorts_Filter.Database.Models;
 
 namespace Discord_Shorts_Filter;
 
@@ -21,7 +22,7 @@ internal class Program
 
     public static async Task Main(string[] args)
     {
-        _applicationLogger = Logger.GetLogger("Application Logger", LogLevel.Info);
+        _applicationLogger = Logger.GetLogger("Application Logger", LogLevel.Debug);
         _botConfig = BotConfiguration.GetBotConfiguration();
         _client = new DiscordSocketClient(_botConfig.Config);
         _database = Database.Database.GetDatabase(_botConfig.DatabasePath);
@@ -36,15 +37,15 @@ internal class Program
             new FilterAssoiation(_client, _applicationLogger)
         };
 
-        _client.Ready += ClientOnReady;
-
+        // _client.Ready += ClientOnReady;
+        
         _applicationLogger.Info("Logging into Discord...");
         await _client.LoginAsync(TokenType.Bot, _botConfig.Token);
         _applicationLogger.Info("Logged into Discord!");
         _applicationLogger.Info("Starting the bot...");
         await _client.StartAsync();
         _applicationLogger.Info("The bot has been started!");
-            
+        
         await Task.Delay(-1);
     }
 
