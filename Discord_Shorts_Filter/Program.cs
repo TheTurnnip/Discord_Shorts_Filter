@@ -30,14 +30,14 @@ internal class Program
 
         _appCommands = new List<IAppCommand>()
         {
-            new MakeFilterChannel(_client, _applicationLogger),
-            new MakePostChannel(_client, _applicationLogger),
-            new RemoveFilterChannel(_client, _applicationLogger),
-            new RemovePostChannel(_client, _applicationLogger),
-            new FilterAssoiation(_client, _applicationLogger)
+            new MakeFilterChannel(_client, _database, _applicationLogger),
+            new MakePostChannel(_client, _database, _applicationLogger),
+            new RemoveFilterChannel(_client, _database, _applicationLogger),
+            new RemovePostChannel(_client, _database, _applicationLogger),
+            new FilterAssoiation(_client, _database, _applicationLogger)
         };
 
-        // _client.Ready += ClientOnReady;
+        _client.Ready += ClientOnReady;
         
         _applicationLogger.Info("Logging into Discord...");
         await _client.LoginAsync(TokenType.Bot, _botConfig.Token);

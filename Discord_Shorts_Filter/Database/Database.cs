@@ -91,13 +91,13 @@ public class Database
 		    @"
 				CREATE TABLE IF NOT EXISTS DiscordFilterChannels(
 					ChannelId INT UNIQUE NOT NULL,
-					GuildId INT UNIQUE NOT NULL,
+					GuildId INT NOT NULL,
 					ChannelName TEXT NOT NULL
 				);
 
 				CREATE TABLE IF NOT EXISTS DiscordPostChannels(
 					ChannelId INT UNIQUE NOT NULL,
-					GuildId INT UNIQUE NOT NULL,
+					GuildId INT NOT NULL,
 					ChannelName INT NOT NULL
 				);
 

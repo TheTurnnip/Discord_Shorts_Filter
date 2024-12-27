@@ -1,3 +1,4 @@
+using Discord_Shorts_Filter.Database.Models;
 using Discord_Shorts_Filter.Logging;
 using Discord_Shorts_Filter.Tools;
 using Discord;
@@ -74,6 +75,7 @@ public class MakePostChannel : IAppCommand
         }
         
         ulong postChannelId = await CreateFilterChannelAsync(commandGuild, postChannelName);
+        Database.InsertDiscordChannel<DiscordPostChannels>(postChannelId, (ulong)command.GuildId, postChannelName);
 
         CommandLogger.Info($"Created post channel. Guild ID: {command.GuildId} Channel ID: {postChannelId}");
         await command.RespondAsync($"Channel {postChannelName} has been made a post channel.", 
@@ -83,17 +85,34 @@ public class MakePostChannel : IAppCommand
     private async Task<ulong> CreateFilterChannelAsync(SocketGuild guild, string channelName)
     {
         ValidatedChannelName validatedChannelName = new ValidatedChannelName(channelName);
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder.WithColor(Color.Green);
         
         foreach (SocketGuildChannel channel in guild.Channels)
         {
             if (validatedChannelName.ValidName == channel.Name)
             {
+                embedBuilder.WithTitle("New posting channel!")
+                    .AddField("Channel ID:", channel.Id.ToString(), true)
+                    .AddField("What does this mean?",
+                        "You will now get videos in this channel that are shorts free!");
+                
+                await guild.GetTextChannel(channel.Id).SendMessageAsync(embed: embedBuilder.Build());
+                
                 CommandLogger.Info($"Channel {validatedChannelName.ValidName} already exists, skipping creation...");
                 return channel.Id;
             }
         }
-
+        
         ITextChannel newChannel = await guild.CreateTextChannelAsync(validatedChannelName.ValidName);
+        
+        embedBuilder.WithTitle("New posting channel!")
+            .AddField("Channel ID:", newChannel.Id.ToString(), true)
+            .AddField("What does this mean?",
+                "You will now get videos in this channel that are shorts free!");
+        
+        await newChannel.SendMessageAsync(embed: embedBuilder.Build());
+        
         CommandLogger.Info($"Created channel: {validatedChannelName} || " +
                            $"Channel ID: {newChannel.Id} || " +
                            $"Server Name: {guild.Name} || " +
