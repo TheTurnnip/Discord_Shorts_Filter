@@ -136,7 +136,7 @@ internal class MakeFilterChannel : IAppCommand
                                $"Filter Category ID: {filterCategory} " +
                                $"Guild Name: {guild.Name} " +
                                $"Guild ID: {guild.Id}");
-            await command.RespondAsync("Created filter channel!", ephemeral: true);
+            Database.InsertDiscordChannel<DiscordFilterChannels>(filterChannel, guild.Id, optionsMap[optionChannelName]);
         }
         else if (optionsMap.ContainsKey(optionChannelName))
         {
@@ -150,8 +150,7 @@ internal class MakeFilterChannel : IAppCommand
                                $"Filter Category ID: {filterCategory} " +
                                $"Guild Name: {guild.Name} " +
                                $"Guild ID: {guild.Id}");
-            await command.RespondAsync("Created filter channel!", ephemeral: true);
-
+            Database.InsertDiscordChannel<DiscordFilterChannels>(filterChannel, guild.Id, optionsMap[optionChannelName]);
         }
         else if (optionsMap.ContainsKey(optionChannelCategoryName))
         {
@@ -165,7 +164,7 @@ internal class MakeFilterChannel : IAppCommand
                                $"Filter Category ID: {filterCategory} " +
                                $"Guild Name: {guild.Name} " +
                                $"Guild ID: {guild.Id}");
-            await command.RespondAsync("Created filter channel!", ephemeral: true);
+            Database.InsertDiscordChannel<DiscordFilterChannels>(filterChannel, guild.Id, defaultChannelName);
         }
         else
         {
@@ -179,8 +178,10 @@ internal class MakeFilterChannel : IAppCommand
                                $"Filter Category ID: {filterCategory} " +
                                $"Guild Name: {guild.Name} " +
                                $"Guild ID: {guild.Id}");
-            await command.RespondAsync("Created filter channel!", ephemeral: true);
+            Database.InsertDiscordChannel<DiscordFilterChannels>(filterChannel, guild.Id, defaultChannelName);
         }
+        
+        await command.RespondAsync("Created filter channel!", ephemeral: true);
     }
 
     /// <summary>
@@ -214,7 +215,7 @@ internal class MakeFilterChannel : IAppCommand
     }
 
     /// <summary>
-    /// Creates a new channel for filtering command.
+    /// Creates a new channel for filtering.
     /// </summary>
     /// <param name="guild">The guild to make the channel in.</param>
     /// <param name="channelName">The name of the channel.</param>
@@ -268,7 +269,7 @@ internal class MakeFilterChannel : IAppCommand
         EmbedFieldBuilder detailsFieldBuilder = new EmbedFieldBuilder();
         string detailsMessage = "You can now use it for bots or services that auto post to a channel. " +
                                 "\n Use the channel ID found above when setting those services." +
-                                "\n Also please be sure to Assosiate any channel where you want the videos" +
+                                "\n Also please be sure to assosiate any channel where you want the videos " +
                                 "poseted to.";
         detailsFieldBuilder.WithName("How this is used:");
         detailsFieldBuilder.WithValue(detailsMessage);
