@@ -13,12 +13,15 @@ public class MakePostChannel : IAppCommand
     private DiscordSocketClient _client;
     private Logger CommandLogger { get; set; } = Logger.GetLogger("MakePostChannel Logger", LogLevel.Info);
 
-    public MakePostChannel(DiscordSocketClient client)
+    private Database.Database Database { get; set; }
+    
+    public MakePostChannel(DiscordSocketClient client, Database.Database database)
     {
         _client = client;
+        Database = database;
     }
 
-    public MakePostChannel(DiscordSocketClient client, Logger commandLogger) : this(client)
+    public MakePostChannel(DiscordSocketClient client, Database.Database database, Logger commandLogger) : this(client, database)
     {
         CommandLogger = commandLogger;
     }

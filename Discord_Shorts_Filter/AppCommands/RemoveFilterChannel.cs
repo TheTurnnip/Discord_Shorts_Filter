@@ -11,12 +11,15 @@ public class RemoveFilterChannel : IAppCommand
     private DiscordSocketClient _client;
     private Logger CommandLogger { get; set; } = Logger.GetLogger("RemoveFilterChannel Logger", LogLevel.Info);
 
-    public RemoveFilterChannel(DiscordSocketClient client)
+    private Database.Database Database { get; set; }
+    
+    public RemoveFilterChannel(DiscordSocketClient client, Database.Database database)
     {
         _client = client;
+        Database = database;
     }
 
-    public RemoveFilterChannel(DiscordSocketClient client, Logger commandLogger) : this(client)
+    public RemoveFilterChannel(DiscordSocketClient client, Database.Database database, Logger commandLogger) : this(client, database)
     {
         CommandLogger = commandLogger;
     }

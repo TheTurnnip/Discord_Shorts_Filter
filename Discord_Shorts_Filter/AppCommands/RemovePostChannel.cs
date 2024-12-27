@@ -13,12 +13,15 @@ public class RemovePostChannel : IAppCommand
     
     private Logger CommandLogger { get; set; } = Logger.GetLogger("RemovePostChannel Logger", LogLevel.Info);
 
-    public RemovePostChannel(DiscordSocketClient client)
+    private Database.Database Database { get; set; }
+    
+    public RemovePostChannel(DiscordSocketClient client, Database.Database database)
     {
         _client = client;
+        Database = database;
     }
 
-    public RemovePostChannel(DiscordSocketClient client, Logger logger) : this(client)
+    public RemovePostChannel(DiscordSocketClient client, Database.Database database , Logger logger) : this(client, database)
     {
         CommandLogger = logger;
     }

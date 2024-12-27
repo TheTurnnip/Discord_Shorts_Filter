@@ -14,13 +14,16 @@ public class FilterAssoiation : IAppCommand
     private DiscordSocketClient _client;
     
     private Logger CommandLogger { get; set; } = Logger.GetLogger("FilterAssoiation Logger", LogLevel.Info);   
+    
+    private Database.Database Database { get; set; }
         
-    public FilterAssoiation(DiscordSocketClient client)
+    public FilterAssoiation(DiscordSocketClient client, Database.Database database)
     {
         _client = client;
+        Database = database;
     }
 
-    public FilterAssoiation(DiscordSocketClient client, Logger logger) : this(client)
+    public FilterAssoiation(DiscordSocketClient client, Database.Database database, Logger logger) : this(client, database)
     {
         CommandLogger = logger;
     }

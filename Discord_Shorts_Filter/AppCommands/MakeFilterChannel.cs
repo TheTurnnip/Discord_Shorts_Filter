@@ -6,6 +6,8 @@ using Discord_Shorts_Filter.Logging;
 using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using Discord_Shorts_Filter.Tools;
+using Discord_Shorts_Filter.Database;
+using Discord_Shorts_Filter.Database.Models;
 
 namespace Discord_Shorts_Filter.AppCommands;
 
@@ -20,6 +22,8 @@ internal class MakeFilterChannel : IAppCommand
     private DiscordSocketClient _client;
         
     private Logger CommandLogger { get; set; } = Logger.GetLogger("MakeFilterChannel Logger", LogLevel.Info);
+
+    private Database.Database Database { get; set; }
 
     /// <summary>
     /// Name of the option for adding a filter channel.
@@ -45,12 +49,14 @@ internal class MakeFilterChannel : IAppCommand
     /// Creates an instance of the MakeFilterChannel class with the client it is part of.
     /// </summary>
     /// <param name="client">The client to which the command will be added.</param>
-    public MakeFilterChannel(DiscordSocketClient client)
+    /// <param name="database">The Database object use to make quries to the database.</param>
+    public MakeFilterChannel(DiscordSocketClient client, Database.Database database)
     {
         _client = client;
+        Database = database;
     }
 
-    public MakeFilterChannel(DiscordSocketClient client, Logger commandLogger) : this(client)
+    public MakeFilterChannel(DiscordSocketClient client, Database.Database database, Logger commandLogger) : this(client, database)
     {
         CommandLogger = commandLogger;
     }
