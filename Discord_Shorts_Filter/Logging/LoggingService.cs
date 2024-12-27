@@ -40,7 +40,7 @@ public class LoggingService
         {
             string commandLogMessage = $"Command: {commandException.Command.Name} " +
                                        $"Message: {message.Message} " +
-                                       $"Exception: {commandException}";
+                                       $"Exception: {message.Exception}";
             LogMessage(message.Severity, commandLogMessage);
         }
         else

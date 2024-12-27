@@ -115,6 +115,47 @@ public class FilterAssoiation : IAppCommand
 
     public async Task HandleCommandAsync(SocketSlashCommand command)
     {
-        throw new NotImplementedException();
+        if (command.GuildId == null)
+        {
+            await command.RespondAsync("This command must be used in a server!", ephemeral: true);
+        }
+        
+        string? subCommand = command.Data.Options.FirstOrDefault()?.Name;
+
+        if (subCommand == null)
+        {
+            await command.RespondAsync("You can not run this command without a sub-command selection.");
+        }
+        
+        CommandLogger.Debug($"Sub-Command: {subCommand} was selected.");
+
+        switch (subCommand)
+        {
+            case "add":
+                await HandleAddCommand(command);
+                break;
+            case "delete":
+                await HandleDeleteCommand(command);
+                break;
+            case "update":
+                await HandleUpdateCommand(command);
+                break;
+        }
+    }
+    
+    private async Task HandleAddCommand(SocketSlashCommand command)
+    {
+        await command.RespondAsync("Channel filter ID will now post to ID", ephemeral: true);
+    }
+
+    private async Task HandleDeleteCommand(SocketSlashCommand command)
+    {
+        await command.RespondAsync("The filter ID will no longer post to ID", ephemeral: true);
+    }
+
+    private async Task HandleUpdateCommand(SocketSlashCommand command)
+    {
+        await command.RespondAsync("Updated Filter/Post realtionship. " +
+                                   "\nFilter ID will now post to ID", ephemeral: true);
     }
 }

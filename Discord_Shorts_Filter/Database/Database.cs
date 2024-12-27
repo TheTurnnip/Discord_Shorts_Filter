@@ -1,5 +1,6 @@
 using Discord_Shorts_Filter.Logging;
 using Dapper;
+using Discord_Shorts_Filter.Database.Models;
 using Microsoft.Data.Sqlite;
 
 namespace Discord_Shorts_Filter.Database;
@@ -87,41 +88,25 @@ public class Database
 	    SqliteCommand createDatabaseCommand = connection.CreateCommand();
 	    createDatabaseCommand.CommandText = 
 		    @"
-				CREATE TABLE IF NOT EXISTS YoutubeChannels(
-					id INT PRIMARY KEY NOT NULL,
-					channel_name TEXT,
-					channel_handle TEXT UNIQUE NOT NULL,
-					channel_url TEXT UNIQUE NOT NULL
-				);
-
 				CREATE TABLE IF NOT EXISTS DiscordFilterChannels(
-					id INT PRIMARY KEY NOT NULL,
-					channel_id INT UNIQUE NOT NULL,
-					channel_name TEXT
+					Id INT PRIMARY KEY NOT NULL,
+					ChannelId INT UNIQUE NOT NULL,
+					ChannelName TEXT
 				);
 
 				CREATE TABLE IF NOT EXISTS DiscordPostChannels(
-					id INT PRIMARY KEY NOT NULL,
-					channel_id INT UNIQUE NOT NULL,
-					channel_name INT NOT NULL
+					Id INT PRIMARY KEY NOT NULL,
+					ChannelId INT UNIQUE NOT NULL,
+					ChannelName INT NOT NULL
 				);
 
-				CREATE TABLE IF NOT EXISTS DiscordFilterChannelsDiscordPostChannels(
-					id INT PRIMARY KEY NOT NULL,
-					filter_channel_id INT NOT NULL,
-					post_channel_name INT NOT NULL,
+				CREATE TABLE IF NOT EXISTS FilterPostMaps(
+					Id INT PRIMARY KEY NOT NULL,
+					FilterChannelId INT NOT NULL,
+					PostChannelId INT NOT NULL,
 					
-					FOREIGN KEY (filter_channel_id) REFERENCES DiscordFilterChannels (id) ON DELETE SET NULL,
-					FOREIGN KEY (post_channel_name) REFERENCES DiscordPostChannels (id) ON DELETE SET NULL 
-				);
-
-				CREATE TABLE IF NOT EXISTS YoutubeChannelsDiscordFilterChannels(
-					id PRIMARY KEY NOT NULL,
-					youtube_channel_id INT NOT NULL,
-					filter_channel_id INT NOT NULL,
-					
-					FOREIGN KEY (youtube_channel_id) REFERENCES YoutubeChannels (id) ON DELETE SET NULL,
-					FOREIGN KEY (filter_channel_id) REFERENCES DiscordFilterChannels (id) ON DELETE SET NULL 
+					FOREIGN KEY (FilterChannelID) REFERENCES DiscordFilterChannels (id) ON DELETE SET NULL,
+					FOREIGN KEY (PostChannelID) REFERENCES DiscordPostChannels (id) ON DELETE SET NULL 
 				);
 			";
 
@@ -171,4 +156,15 @@ public class Database
 	    }
 	    return true;
     }
+
+	public T GetDiscordChannel<T>(int channelId) where T : IDiscordChannel, new()
+	{
+		using var connection = new SqliteConnection(ConnectionString);
+		
+		string query = $"SELECT * FROM [{typeof(T).Name}] WHERE ChannelId = @Id";
+		
+		T output = connection.QuerySingle<T>(query, new { Id = channelId });
+		return output;
+	}
+	
 }
