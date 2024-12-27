@@ -1,6 +1,7 @@
 using Discord_Shorts_Filter.Logging;
 using Dapper;
 using Discord_Shorts_Filter.Database.Models;
+using Discord;
 using Microsoft.Data.Sqlite;
 
 namespace Discord_Shorts_Filter.Database;
@@ -89,24 +90,23 @@ public class Database
 	    createDatabaseCommand.CommandText = 
 		    @"
 				CREATE TABLE IF NOT EXISTS DiscordFilterChannels(
-					Id INT PRIMARY KEY NOT NULL,
 					ChannelId INT UNIQUE NOT NULL,
-					ChannelName TEXT
+					GuildId INT UNIQUE NOT NULL,
+					ChannelName TEXT NOT NULL
 				);
 
 				CREATE TABLE IF NOT EXISTS DiscordPostChannels(
-					Id INT PRIMARY KEY NOT NULL,
 					ChannelId INT UNIQUE NOT NULL,
+					GuildId INT UNIQUE NOT NULL,
 					ChannelName INT NOT NULL
 				);
 
 				CREATE TABLE IF NOT EXISTS FilterPostMaps(
-					Id INT PRIMARY KEY NOT NULL,
 					FilterChannelId INT NOT NULL,
 					PostChannelId INT NOT NULL,
 					
-					FOREIGN KEY (FilterChannelID) REFERENCES DiscordFilterChannels (id) ON DELETE SET NULL,
-					FOREIGN KEY (PostChannelID) REFERENCES DiscordPostChannels (id) ON DELETE SET NULL 
+					FOREIGN KEY (FilterChannelID) REFERENCES DiscordFilterChannels (ChannelId) ON DELETE SET NULL,
+					FOREIGN KEY (PostChannelID) REFERENCES DiscordPostChannels (ChannelId) ON DELETE SET NULL 
 				);
 			";
 
@@ -157,14 +157,125 @@ public class Database
 	    return true;
     }
 
-	public T GetDiscordChannel<T>(int channelId) where T : IDiscordChannel, new()
+	/// <summary>
+	/// Gets a Discord channel from the database
+	/// and returns it's model.
+	/// </summary>
+	/// <param name="channelId">The discord channel's ID</param>
+	/// <typeparam name="T">
+	/// The model that you want to select from the database.
+	/// The model must implement the IDiscordChannel Interface
+	/// and have a constructor that takes no parameters.
+	/// </typeparam>
+	/// <returns>An IDiscordChannel model of type T</returns>
+	public T GetDiscordChannel<T>(ulong channelId) where T : IDiscordChannel, new()
 	{
 		using var connection = new SqliteConnection(ConnectionString);
+		string tableName = typeof(T).Name;
 		
-		string query = $"SELECT * FROM [{typeof(T).Name}] WHERE ChannelId = @Id";
+		string query = $"SELECT * FROM [{tableName}] WHERE ChannelId = @Id";
 		
 		T output = connection.QuerySingle<T>(query, new { Id = channelId });
 		return output;
 	}
+
+	/// <summary>
+	/// Insert a Discord channel into the Database
+	/// </summary>
+	/// <param name="channelId">The discord channel ID</param>
+	/// <param name="guildId">The discord server ID</param>
+	/// <param name="channelName">The name of the discord channel.</param>
+	/// <typeparam name="T">
+	/// The model class for the table to insert the data into.
+	/// The model class must implement the IDiscordChannel interface and
+	/// have a constructor that takes no parameters.
+	/// </typeparam>
+	/// <returns>True of the insert was sucessful, and false if it failed.</returns>
+	public bool InsertDiscordChannel<T>(ulong channelId, ulong guildId, string channelName) where T : IDiscordChannel, new()
+	{
+		using var connection = new SqliteConnection(ConnectionString);
+		string tableName = typeof(T).Name;
+		
+		string query = $"INSERT INTO [{tableName}] (ChannelId, GuildId, ChannelName) VALUES (@ChannelId, @GuildId, @ChannelName)";
+		
+		try
+		{ 
+			connection.Execute(query, new { ChannelId = channelId, GuildId = guildId, ChannelName = channelName });
+		}
+		catch (Exception)
+		{
+			DatabaseLogger.Critical($"There was an error inserting the Discord channel into table: {tableName}.");
+			return false;
+		}
+		return true;
+	}
+
+	/// <summary>
+	/// Delete a Discord channel from the database.
+	/// </summary>
+	/// <param name="channelId">The ID of the discord channel to delete.</param>
+	/// <typeparam name="T">
+	/// The model class for the table to delete the data from.
+	/// The model class must implement the IDiscordChannel interface and
+	/// have a constructor that takes no parameters.
+	/// </typeparam>
+	/// <returns>True if the delete was successful, false if it failed.</returns>
+	public bool DeleteDiscordChannel<T>(ulong channelId) where T : IDiscordChannel, new()
+	{
+		using var connection = new SqliteConnection(ConnectionString);
+		string tableName = typeof(T).Name;
+		
+		string query = $"DELETE FROM [{tableName}] WHERE ChannelId = @ChannelId";
+
+		try
+		{
+			connection.Execute(query, new { ChannelId = channelId });
+		}
+		catch (Exception)
+		{
+			DatabaseLogger.Critical($"There was an error deleting the Discord channel from table: {tableName}.");
+			return false;
+		}
+		return true;
+	}
 	
+	/// <summary>
+	/// Update a Discord channel in the database.
+	/// </summary>
+	/// <param name="currentChannelId">
+	/// The ID of the disocrd channel that
+	/// is currently in the database.
+	/// </param>
+	/// <param name="newChannelId">
+	/// The new Discord channel ID to update the row with.
+	/// </param>
+	/// <param name="guildId">
+	/// The server ID that the the row should be updated with.
+	/// </param>
+	/// <param name="channelName">
+	/// The new channel name that the row should be updated with.
+	/// </param>
+	/// <typeparam name="T">
+	/// The model class for the table to update the data for.
+	/// The model class must implement the IDiscordChannel interface and
+	/// have a constructor that takes no parameters.
+	/// </typeparam>
+	/// <returns>True if the update was successful, false if it failed.</returns>
+	public bool UpdateDiscordChannel<T>(ulong currentChannelId, ulong newChannelId, ulong guildId, string channelName) where T : IDiscordChannel, new()
+	{
+		using var connection = new SqliteConnection(ConnectionString);
+		string tableName = typeof(T).Name;
+
+		string query = $"UPDATE [{tableName}] SET ChannelId = @ChannelId, GuildId = @GuildId, ChannelName = @ChannelName WHERE ChannelId = {currentChannelId};";
+
+		try
+		{
+			connection.Execute(query, new { ChannelId = newChannelId, GuildId = guildId, ChannelName = channelName });
+		} catch (Exception)
+		{
+			DatabaseLogger.Critical("There was an error updating table: {tableName}.");
+			return false;
+		}
+		return true;
+	}
 }
