@@ -80,6 +80,7 @@ internal class MakeFilterChannel : IAppCommand
         try
         {
             await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
+            CommandLogger.Info($"Added {CommandName} to {_client.GetGuild(guildID).Name}.");
         }
         catch (HttpException exception) 
         {
@@ -122,6 +123,13 @@ internal class MakeFilterChannel : IAppCommand
             ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[optionChannelCategoryName]);
             ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[optionChannelName]);
             await AssociateChannelAsync(guild, filterCategory, filterChannel);
+            CommandLogger.Info($"Created filter channel. " +
+                               $"Filter Channel Name: {optionsMap[optionChannelName]} " +
+                               $"Filter Channel ID: {filterChannel} " +
+                               $"Filter Category Name: {optionsMap[optionChannelCategoryName]} " +
+                               $"Filter Category ID: {filterCategory} " +
+                               $"Guild Name: {guild.Name} " +
+                               $"Guild ID: {guild.Id}");
             await command.RespondAsync("Created filter channel!", ephemeral: true);
         }
         else if (optionsMap.ContainsKey(optionChannelName))
@@ -129,6 +137,13 @@ internal class MakeFilterChannel : IAppCommand
             ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
             ulong filterChannel = await CreateFilterChannelAsync(guild, optionsMap[optionChannelName]);
             await AssociateChannelAsync(guild, filterCategory, filterChannel);
+            CommandLogger.Info($"Created filter channel. " +
+                               $"Filter Channel Name: {optionsMap[optionChannelName]} " +
+                               $"Filter Channel ID: {filterChannel} " +
+                               $"Filter Category Name: {defaultChannelCategoryName} " +
+                               $"Filter Category ID: {filterCategory} " +
+                               $"Guild Name: {guild.Name} " +
+                               $"Guild ID: {guild.Id}");
             await command.RespondAsync("Created filter channel!", ephemeral: true);
 
         }
@@ -137,6 +152,13 @@ internal class MakeFilterChannel : IAppCommand
             ulong filterCategory = await CreateFilterCategoryAsync(guild, optionsMap[optionChannelCategoryName]);
             ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
             await AssociateChannelAsync(guild, filterCategory, filterChannel);
+            CommandLogger.Info($"Created filter channel. " +
+                               $"Filter Channel Name: {defaultChannelName} " +
+                               $"Filter Channel ID: {filterChannel} " +
+                               $"Filter Category Name: {optionsMap[optionChannelCategoryName]} " +
+                               $"Filter Category ID: {filterCategory} " +
+                               $"Guild Name: {guild.Name} " +
+                               $"Guild ID: {guild.Id}");
             await command.RespondAsync("Created filter channel!", ephemeral: true);
         }
         else
@@ -144,6 +166,13 @@ internal class MakeFilterChannel : IAppCommand
             ulong filterCategory = await CreateFilterCategoryAsync(guild, defaultChannelCategoryName);
             ulong filterChannel = await CreateFilterChannelAsync(guild, defaultChannelName);
             await AssociateChannelAsync(guild, filterCategory, filterChannel);
+            CommandLogger.Info($"Created filter channel. " +
+                               $"Filter Channel Name: {defaultChannelName} " +
+                               $"Filter Channel ID: {filterChannel} " +
+                               $"Filter Category Name: {defaultChannelCategoryName} " +
+                               $"Filter Category ID: {filterCategory} " +
+                               $"Guild Name: {guild.Name} " +
+                               $"Guild ID: {guild.Id}");
             await command.RespondAsync("Created filter channel!", ephemeral: true);
         }
     }
@@ -171,7 +200,10 @@ internal class MakeFilterChannel : IAppCommand
         }
 
         RestCategoryChannel newCategory = await guild.CreateCategoryChannelAsync(categoryName);
-        CommandLogger.Info($"Created category {newCategory.Name} || ID = {newCategory.Id}");
+        CommandLogger.Info($"Created category {newCategory.Name} || " +
+                           $"Category ID: {newCategory.Id} || " +
+                           $"Server Name: {guild.Name} || " +
+                           $"Server ID: {guild.Id}.");
         return newCategory.Id;
     }
 
@@ -194,12 +226,16 @@ internal class MakeFilterChannel : IAppCommand
         {
             if (guildChannel.Name == validatedChannelName.ValidName) 
             {
+                CommandLogger.Info($"Category {validatedChannelName.ValidName} already exists, skipping creation...");
                 return guildChannel.Id;
             }
         }
 
         ITextChannel channel = await guild.CreateTextChannelAsync(validatedChannelName.ValidName);
-        CommandLogger.Info($"Created channel: {validatedChannelName.ValidName} In Server: {guild.Name}");
+        CommandLogger.Info($"Created channel: {validatedChannelName.ValidName} || " +
+                           $"Channel ID: {channel.Id} || " +
+                           $"Server Name: {guild.Name} || " +
+                           $"Server ID: {guild.Id}.");
         return channel.Id;
     }
 
@@ -242,7 +278,10 @@ internal class MakeFilterChannel : IAppCommand
         // Modify the channel to be in the right category.
         await guildChannel.ModifyAsync(prop => prop.CategoryId = category);
 
-        CommandLogger.Info("Added the channel to the category.");
+        CommandLogger.Info($"Added channel to category. " +
+                           $"Channel ID: {channel} || " +
+                           $"Category ID: {category} || " +
+                           $"Server Name: {guild.Name}.");
             
         await socketGuildChannel.SendMessageAsync(embed: embed.Build());
     }

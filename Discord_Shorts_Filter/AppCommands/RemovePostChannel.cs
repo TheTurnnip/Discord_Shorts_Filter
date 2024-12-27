@@ -39,6 +39,7 @@ public class RemovePostChannel : IAppCommand
         try
         {            
             await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
+            CommandLogger.Info($"Added {CommandName} to {_client.GetGuild(guildID).Name}.");
         }
         catch (HttpException exception) 
         {
@@ -71,6 +72,6 @@ public class RemovePostChannel : IAppCommand
         
         await command.RespondAsync("Removed channel from the post system. " +
                                    "\nYou can now safely delete it from the server.", 
-            ephemeral: true);
+                                    ephemeral: true);
     }
 }

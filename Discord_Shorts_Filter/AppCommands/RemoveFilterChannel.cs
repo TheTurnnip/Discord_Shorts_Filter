@@ -37,6 +37,7 @@ public class RemoveFilterChannel : IAppCommand
         try
         {            
             await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
+            CommandLogger.Info($"Added {CommandName} to {_client.GetGuild(guildID).Name}.");
         }
         catch (HttpException exception) 
         {
@@ -69,7 +70,6 @@ public class RemoveFilterChannel : IAppCommand
                 ephemeral: true);
         }
         
-        CommandLogger.Debug("Deleted Channel Name: " + channel.Name);
         await command.RespondAsync("Removed channel from the filter system. " +
                                    "\nYou can now safely delete it from the server.", 
                                     ephemeral: true);

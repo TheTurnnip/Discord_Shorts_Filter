@@ -38,7 +38,9 @@ public class LoggingService
     {
         if (message.Exception is CommandException commandException)
         {
-            string commandLogMessage = $"Command: {commandException.Command.Name} Message: {message.Message}";
+            string commandLogMessage = $"Command: {commandException.Command.Name} " +
+                                       $"Message: {message.Message} " +
+                                       $"Exception: {commandException}";
             LogMessage(message.Severity, commandLogMessage);
         }
         else

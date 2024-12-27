@@ -40,6 +40,7 @@ public class MakePostChannel : IAppCommand
         try
         {
             await _client.GetGuild(guildID).CreateApplicationCommandAsync(commandBuilder.Build());
+            CommandLogger.Info($"Added {CommandName} to {_client.GetGuild(guildID).Name}.");
         }
         catch (HttpException exception) 
         {
@@ -70,9 +71,8 @@ public class MakePostChannel : IAppCommand
         }
         
         ulong postChannelId = await CreateFilterChannelAsync(commandGuild, postChannelName);
-        
-        CommandLogger.Debug("Post Channel ID:" + postChannelId.ToString());
-        
+
+        CommandLogger.Info($"Created post channel. Guild ID: {command.GuildId} Channel ID: {postChannelId}");
         await command.RespondAsync($"Channel {postChannelName} has been made a post channel.", 
                                     ephemeral: true);
     }
@@ -85,11 +85,16 @@ public class MakePostChannel : IAppCommand
         {
             if (validatedChannelName.ValidName == channel.Name)
             {
+                CommandLogger.Info($"Channel {validatedChannelName.ValidName} already exists, skipping creation...");
                 return channel.Id;
             }
         }
 
         ITextChannel newChannel = await guild.CreateTextChannelAsync(validatedChannelName.ValidName);
+        CommandLogger.Info($"Created channel: {validatedChannelName} || " +
+                           $"Channel ID: {newChannel.Id} || " +
+                           $"Server Name: {guild.Name} || " +
+                           $"Server ID: {guild.Id}.");
         return newChannel.Id;
     }
 }

@@ -33,6 +33,7 @@ internal class Program
             new MakePostChannel(_client, _applicationLogger),
             new RemoveFilterChannel(_client, _applicationLogger),
             new RemovePostChannel(_client, _applicationLogger),
+            new FilterAssoiation(_client, _applicationLogger)
         };
 
         _client.Ready += ClientOnReady;
@@ -54,11 +55,10 @@ internal class Program
         // Register each command with all the guilds the bot is in.
         foreach (SocketGuild guild in _client.Guilds)
         {
-            _applicationLogger.Info($"Staring to register commands for Guild: {guild.Name}");
+            _applicationLogger.Info($"Staring to register commands for Guild: {guild.Name} || ID: {guild.Id}");
             foreach (IAppCommand appCommand in _appCommands)
             {
                 await appCommand.AddCommandAsync(guild.Id);
-                _applicationLogger.Info($"Registerd {appCommand.GetType()} with {guild.Name}...");
             }
         }
             
