@@ -1,3 +1,4 @@
+using Discord_Shorts_Filter.Database.Models;
 using Discord_Shorts_Filter.Logging;
 using Discord;
 using Discord.Commands;
@@ -35,7 +36,7 @@ public class RemovePostChannel : IAppCommand
         commandBuilder.WithDefaultMemberPermissions(GuildPermission.Administrator);
         commandBuilder.WithDescription("Removes a channel from the post system.");
         commandBuilder.AddOption("post_channel_name",
-                                 ApplicationCommandOptionType.String,
+                                 ApplicationCommandOptionType.Channel,
                                  "The channel to remove from the post system.",
                                  true);
         
@@ -63,18 +64,24 @@ public class RemovePostChannel : IAppCommand
             await command.RespondAsync("This command must be used in a server!", ephemeral: true);
         }
         
-        SocketTextChannel? channel = command.Data.Options.First(
-            option => option.Name == "filter_channel_id"
-        ).Value as SocketTextChannel;
+        SocketTextChannel? channel = command.Data.Options.FirstOrDefault().Value as SocketTextChannel;
 
         if (channel == null)
         {
             await command.RespondAsync("There was an error finding the channel in the server.", 
                 ephemeral: true);
         }
-        
-        await command.RespondAsync("Removed channel from the post system. " +
-                                   "\nYou can now safely delete it from the server.", 
-                                    ephemeral: true);
+
+        if (Database.DeleteDiscordChannel<DiscordPostChannels>(channel.Id))
+        {
+            await command.RespondAsync("Removed channel from the post system. " +
+                                       "\nYou can now safely delete it from the server.", 
+                                        ephemeral: true);            
+        }
+        else
+        {
+            await command.RespondAsync("There was an error removing the channel from the system.", 
+                                        ephemeral: true);
+        }
     }
 }

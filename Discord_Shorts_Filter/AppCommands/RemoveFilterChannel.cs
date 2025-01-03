@@ -1,3 +1,4 @@
+using Discord_Shorts_Filter.Database.Models;
 using Discord_Shorts_Filter.Logging;
 using Discord;
 using Discord.Net;
@@ -63,18 +64,71 @@ public class RemoveFilterChannel : IAppCommand
         }
 
         // Get the channel that needs to be removed from the system.
-        SocketTextChannel? channel = command.Data.Options.First(
+        SocketChannel? channel = command.Data.Options.First(
             option => option.Name == "filter_channel_id"
-        ).Value as SocketTextChannel;
+        ).Value as SocketChannel;
 
         if (channel == null)
         {
             await command.RespondAsync("There was an error finding the channel in the server.", 
                 ephemeral: true);
         }
-        
-        await command.RespondAsync("Removed channel from the filter system. " +
-                                   "\nYou can now safely delete it from the server.", 
-                                    ephemeral: true);
+
+        switch (channel.GetChannelType())
+        {
+            case ChannelType.Text:
+                if (!await RemoveChannelAsync(channel))
+                {
+                    await command.RespondAsync("There was an error removing the channel from the systme.", 
+                                                ephemeral: true);
+                }
+                else
+                {
+                    await command.RespondAsync("The channel has been removed from the system. " +
+                                               "\nYou may safely delete the channel in Discord.", 
+                                                ephemeral: true);
+                }
+                break;
+            case ChannelType.Category:
+                List<string> errors = await RemoveCategoryAsync(channel, (ulong)command.GuildId);
+                if (errors.Count > 0)
+                {
+                    string formattedErrors = "";
+                    foreach (var error in errors)
+                    {
+                        formattedErrors += $"{error}\n";
+                    }
+                    
+                    await command.RespondAsync("Unable to remove some channels from the system. " +
+                                               $"Could not remove \n{formattedErrors}", ephemeral: true);
+                }
+                else
+                {
+                    await command.RespondAsync("The channel has been removed from the system. " +
+                                               "\nYou may safely delete the channel in Discord.", 
+                                                ephemeral: true);
+                }
+                break;
+        }
+    }
+
+    private async Task<bool> RemoveChannelAsync(SocketChannel channel)
+    {
+        return Database.DeleteDiscordChannel<DiscordFilterChannels>(channel.Id);
+    }
+
+    private async Task<List<string>> RemoveCategoryAsync(SocketChannel channel, ulong guildId)
+    {
+        List<string> errors = new List<string>();
+        SocketCategoryChannel category = _client.GetGuild(guildId).GetCategoryChannel(channel.Id);
+
+        foreach (SocketGuildChannel categoryChannel in category.Channels)
+        {
+            if (!Database.DeleteDiscordChannel<DiscordFilterChannels>(categoryChannel.Id))
+            {
+                errors.Add($"Could not channel from system. Name: {categoryChannel.Name}, ID: {categoryChannel.Id}.");
+            }
+        }
+        return errors;
     }
 }

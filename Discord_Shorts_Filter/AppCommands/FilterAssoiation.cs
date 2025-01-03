@@ -118,6 +118,11 @@ public class FilterAssoiation : IAppCommand
 
     public async Task HandleCommandAsync(SocketSlashCommand command)
     {
+        if (command.CommandName != CommandName)
+        {
+            return;
+        }
+        
         if (command.GuildId == null)
         {
             await command.RespondAsync("This command must be used in a server!", ephemeral: true);
